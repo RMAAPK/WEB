@@ -37,3 +37,9 @@ if command -v gotosocial >/dev/null 2>&1; then
     gotosocial --config-path /app/fediverse/config.yaml admin account promote \
         --username "$ADMIN_USER" 2>/dev/null || true
 fi
+
+# 3. Immediately trigger vault sync so initial Matrix keys/tokens/state are committed to Hugging Face
+if [ -n "$HF_TOKEN" ]; then
+    echo "[Users] Immediate state upload to Hugging Face vault..."
+    python3 /app/storage/vault_sync.py upload || true
+fi

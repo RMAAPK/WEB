@@ -64,7 +64,7 @@ if __name__ == "__main__":
         restore_snapshot()
     elif len(sys.argv) > 1 and sys.argv[1] == "loop":
         while True:
-            time.sleep(3600) # Sync hourly
+            time.sleep(300) # Sync every 5 minutes
             upload_snapshot()
     else:
         upload_snapshot()

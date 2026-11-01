@@ -22,11 +22,24 @@ CONDUIT_CONFIG=/app/matrix/conduit.toml matrix-homeserver >/tmp/matrix.log 2>&1 
 # Run user initialization / provisioning in background
 /app/scripts/init_users.sh &
 
-# 4. Launch Cloud State Sync Loop in background (Hourly snapshot)
+# 4. Launch Cloud State Sync Loop in background (Every 5 minutes snapshot)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &
 fi
 
+# Graceful shutdown handler to persist Matrix RocksDB state before Render terminates the container
+cleanup() {
+    echo "[Shutdown] SIGTERM/SIGINT received! Syncing latest state to Hugging Face Vault..."
+    if [ -n "$HF_TOKEN" ]; then
+        python3 /app/storage/vault_sync.py upload || true
+    fi
+    exit 0
+}
+trap cleanup TERM INT
+
 # 5. Launch RMAA Gateway on $PORT (Front-facing Reverse Proxy & Middle Finger Page)
 echo "[Boot] Launching RMAA Gateway on :${PORT:-10000}..."
-exec /app/gateway_bin
+/app/gateway_bin &
+GATEWAY_PID=$!
+
+wait $GATEWAY_PID
