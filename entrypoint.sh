@@ -22,7 +22,13 @@ CONDUIT_CONFIG=/app/matrix/conduit.toml matrix-homeserver >/tmp/matrix.log 2>&1 
 # Run user initialization / provisioning in background
 /app/scripts/init_users.sh &
 
-# 4. Launch Cloud State Sync Loop in background (Every 5 minutes snapshot)
+# Launch Matrix AI Bot Bridge (Claude, Gemini, ChatGPT via Replicate)
+if [ -n "$REPLICATE_API_TOKEN" ]; then
+    echo "[Boot] Launching RMAA Matrix AI Bots daemon..."
+    python3 /app/scripts/matrix_ai_bots.py >/tmp/ai_bots.log 2>&1 &
+fi
+
+# 4. Launch Cloud State Sync Loop in background (500ms reactive loop)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &
 fi
