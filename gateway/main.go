@@ -125,6 +125,8 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(path, "/api/v1/") ||
 		strings.HasPrefix(path, "/api/v2/") ||
 		strings.HasPrefix(path, "/oauth/") ||
+		strings.HasPrefix(path, "/auth/") ||
+		strings.HasPrefix(path, "/assets/") ||
 		strings.HasPrefix(path, "/users/") ||
 		strings.HasPrefix(path, "/inbox") ||
 		strings.HasPrefix(path, "/outbox")
