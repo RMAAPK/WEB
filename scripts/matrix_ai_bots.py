@@ -67,13 +67,14 @@ def get_db_connection():
 
 
 def load_bots_from_db() -> Dict[str, Dict[str, Any]]:
-    """Loads active bot personas dynamically from the PostgreSQL bot_registry table."""
+    """Loads active bot personas dynamically from rmaa.bot_registry (fallback to public.bot_registry)."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        # Query dedicated schema first, fallback to public
         cur.execute("""
             SELECT username, display_name, model, system_prompt, temperature, max_tokens 
-            FROM bot_registry 
+            FROM rmaa.bot_registry 
             WHERE enabled = true;
         """)
         rows = cur.fetchall()
@@ -91,7 +92,30 @@ def load_bots_from_db() -> Dict[str, Dict[str, Any]]:
                 }
             return bots
     except Exception as e:
-        print(f"[DB Registry] Failed to read bot_registry from database: {e}. Using fallbacks.")
+        print(f"[DB Registry] Failed to read from rmaa.bot_registry: {e}. Trying public.bot_registry...")
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT username, display_name, model, system_prompt, temperature, max_tokens 
+                FROM public.bot_registry 
+                WHERE enabled = true;
+            """)
+            rows = cur.fetchall()
+            conn.close()
+            if rows:
+                bots = {}
+                for r in rows:
+                    bots[r[0]] = {
+                        "display_name": r[1],
+                        "model": r[2],
+                        "system_prompt": r[3],
+                        "temperature": float(r[4] or 0.3),
+                        "max_tokens": int(r[5] or 1024)
+                    }
+                return bots
+        except Exception as e2:
+            print(f"[DB Registry] Failed to read fallback public table: {e2}. Using static fallbacks.")
     return FALLBACK_BOTS
 
 
