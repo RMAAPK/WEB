@@ -18,16 +18,19 @@ FROM alpine:3.19
 RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
     && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests
 
-WORKDIR /app
+WORKDIR /gotosocial
 
-# Download official GoToSocial release binary (linux amd64)
+# Download and unpack full official GoToSocial release tarball (binary + web templates/assets)
 RUN curl -sSL "https://codeberg.org/superseriousbusiness/gotosocial/releases/download/v0.17.0/gotosocial_0.17.0_linux_amd64.tar.gz" \
-    | tar -xz -C /usr/local/bin/ gotosocial \
+    | tar -xz -C /gotosocial/ \
+    && ln -s /gotosocial/gotosocial /usr/local/bin/gotosocial \
     && chmod +x /usr/local/bin/gotosocial
 
 # Download official Conduwuit release binary (musl static amd64)
 RUN curl -sSL -o /usr/local/bin/matrix-homeserver "https://github.com/x86pup/conduwuit/releases/download/v0.5.0-rc4/static-x86_64-linux-musl" \
     && chmod +x /usr/local/bin/matrix-homeserver
+
+WORKDIR /app
 
 # Copy Gateway binary from Stage 1
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin

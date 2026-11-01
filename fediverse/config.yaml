@@ -20,7 +20,9 @@ db-tls-mode: "disable"
 storage-backend: "local"
 storage-local-base-path: "/data/gotosocial/storage"
 
-# Web UI & Landing Behavior
+# Web UI & Templates
+web-template-base-dir: "/gotosocial/web/template"
+web-asset-base-dir: "/gotosocial/web/assets"
 landing-page-user: ""
 instance-feed-enabled: false
 accounts-registration-open: true
