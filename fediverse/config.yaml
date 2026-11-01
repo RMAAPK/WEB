@@ -5,26 +5,26 @@
 host: "s.rmaa.pk"
 domain: "s.rmaa.pk"
 port: 8080
-bind-address: "127.0.0.1"
+bind-address: "0.0.0.0"
 
 # Database Configuration (Supabase Postgres)
-# Pass via environment variable: GTS_DB_ADDRESS
 db-type: "postgres"
+db-address: "aws-0-ap-southeast-1.pooler.supabase.com"
+db-port: 6543
 db-database: "postgres"
-db-tls-mode: "require"
+db-user: "postgres.qcgumwmldtlcykmcxqjz"
+db-password: "ZgBEOFGDZM1oYGtZ"
+db-tls-mode: "disable"
 
 # Storage Configuration
-# Uses external S3/IPFS bridge or local ephemeral synced to HF
-storage-backend: "s3"
-storage-s3-proxy: true
+storage-backend: "local"
+storage-local-base-path: "/data/gotosocial/storage"
 
 # Web UI & Landing Behavior
-# We disable the built-in landing page so our gateway renders the middle finger page
 landing-page-user: ""
 instance-feed-enabled: false
-accounts-registration-open: false # Private server for RMAA
+accounts-registration-open: true # Allows signup for your account
 
 # Federation Settings
 federation-enabled: true
 software-name: "RMAA-Social"
-
