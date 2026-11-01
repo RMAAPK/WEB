@@ -17,7 +17,11 @@ RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d "$REGISTER_PAY
 echo "[Users] Matrix register response: $RESPONSE"
 
 # Provision GoToSocial user if applicable
+ADMIN_USER="${ADMIN_USERNAME:-thealidev}"
+ADMIN_PASS="${ADMIN_PASSWORD:-302-Killer}"
+ADMIN_MAIL="${ADMIN_EMAIL:-server@rmaa.pk}"
+
 if command -v gotosocial >/dev/null 2>&1; then
-    gotosocial --config-path /app/fediverse/config.yaml --admin-account-username thealidev --admin-account-email "admin@rmaa.pk" --admin-account-password "302-Killer" admin account create 2>/dev/null || true
-    gotosocial --config-path /app/fediverse/config.yaml --username thealidev admin account promote 2>/dev/null || true
+    gotosocial --config-path /app/fediverse/config.yaml --admin-account-username "$ADMIN_USER" --admin-account-email "$ADMIN_MAIL" --admin-account-password "$ADMIN_PASS" admin account create 2>/dev/null || true
+    gotosocial --config-path /app/fediverse/config.yaml --username "$ADMIN_USER" admin account promote 2>/dev/null || true
 fi
