@@ -13,7 +13,7 @@ done
 
 ADMIN_USER="${ADMIN_USERNAME:-thealidev}"
 ADMIN_PASS="${ADMIN_PASSWORD:-302-Killer}"
-ADMIN_MAIL="${ADMIN_EMAIL:-server@rmaa.pk}"
+ADMIN_MAIL="${ADMIN_EMAIL:-thealidevmail@gmail.com}"
 
 # Register Matrix user
 REGISTER_PAYLOAD="{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\",\"auth\":{\"type\":\"m.login.registration_token\",\"token\":\"RMAA-302-SECRET\"}}"
