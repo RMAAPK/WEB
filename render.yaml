@@ -20,3 +20,4 @@ services:
         sync: false # Set in Render dashboard: Hugging Face Access Token
       - key: HF_BACKUP_REPO
         value: rmaapk/rmaa-server-vault
+

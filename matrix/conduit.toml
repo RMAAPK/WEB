@@ -18,3 +18,4 @@ allow_check_for_updates = false
 
 # Memory optimization for 512 MB Render Free limit
 rocksdb_cache_capacity_mb = 32
+

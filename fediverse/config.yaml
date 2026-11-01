@@ -27,3 +27,4 @@ accounts-registration-open: false # Private server for RMAA
 # Federation Settings
 federation-enabled: true
 software-name: "RMAA-Social"
+

@@ -42,3 +42,4 @@ Maintained by **RMAA HOLDINGS** • Private Core Repository
 In your Cloudflare / DNS provider:
 - **CNAME Record:** `s.rmaa.pk` $\to$ `<your-render-subdomain>.onrender.com`
 - Set SSL/TLS mode to **Full / Strict**.
+

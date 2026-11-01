@@ -1,8 +1,8 @@
 # ==============================================================================
 # Multi-Stage Minimal Alpine Container for RMAA Core Server
 # - RMAA Gateway (Single-Port Router + Middle Finger Landing Page)
-# - GoToSocial (Mastodon ActivityPub Daemon) from superseriousbusiness/gotosocial
-# - Conduit (Matrix Homeserver Daemon) from matrixconduit/matrix-conduit
+# - GoToSocial (Mastodon ActivityPub Daemon)
+# - Conduwuit / Conduit (Matrix Homeserver Daemon)
 # ==============================================================================
 
 # Stage 1: Build RMAA Micro-Gateway
@@ -12,13 +12,7 @@ COPY gateway/ ./gateway/
 COPY static/ ./static/
 RUN cd gateway && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/gateway_bin main.go
 
-# Stage 2: Extract official GoToSocial binary
-FROM superseriousbusiness/gotosocial:latest AS gotosocial-source
-
-# Stage 3: Extract official Conduit binary
-FROM matrixconduit/matrix-conduit:latest AS conduit-source
-
-# Stage 4: Production Minimal Runtime
+# Stage 2: Production Minimal Runtime
 FROM alpine:3.19
 
 RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
@@ -26,13 +20,16 @@ RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
 
 WORKDIR /app
 
-# Copy binaries from respective image stages:
-# In superseriousbusiness/gotosocial: /gotosocial/gotosocial
-# In matrixconduit/matrix-conduit: /usr/local/bin/matrix-conduit
-COPY --from=gotosocial-source /gotosocial/gotosocial /usr/local/bin/gotosocial
-COPY --from=conduit-source /usr/local/bin/matrix-conduit /usr/local/bin/matrix-homeserver
+# Download official GoToSocial release binary (linux amd64)
+RUN curl -sSL "https://codeberg.org/superseriousbusiness/gotosocial/releases/download/v0.17.0/gotosocial_0.17.0_linux_amd64.tar.gz" \
+    | tar -xz -C /usr/local/bin/ gotosocial \
+    && chmod +x /usr/local/bin/gotosocial
 
-# Copy Gateway binary
+# Download official Conduwuit release binary (musl static amd64)
+RUN curl -sSL -o /usr/local/bin/matrix-homeserver "https://github.com/x86pup/conduwuit/releases/download/v0.5.0-rc4/static-x86_64-linux-musl" \
+    && chmod +x /usr/local/bin/matrix-homeserver
+
+# Copy Gateway binary from Stage 1
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
 # Copy configs, scripts, and landing page
@@ -42,7 +39,7 @@ COPY matrix/ /app/matrix/
 COPY storage/ /app/storage/
 COPY entrypoint.sh /app/entrypoint.sh
 
-RUN chmod +x /app/entrypoint.sh /app/gateway_bin /usr/local/bin/gotosocial /usr/local/bin/matrix-homeserver
+RUN chmod +x /app/entrypoint.sh /app/gateway_bin
 
 ENV PORT=10000
 EXPOSE 10000
