@@ -11,11 +11,9 @@ max_request_size = 20_000_000 # 20 MB max file size
 # Persistent state snapshot synced to Supabase / HF storage
 database_path = "/data/conduit"
 
-# Registration Settings (Private server for RMAA Holdings)
+# Registration Settings
 allow_registration = true
+registration_token = "RMAA-302-SECRET"
 allow_federation = true
 allow_check_for_updates = false
-
-# Memory optimization for 512 MB Render Free limit
-rocksdb_cache_capacity_mb = 32
 
