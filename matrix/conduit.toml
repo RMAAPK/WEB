@@ -12,7 +12,7 @@ max_request_size = 20_000_000 # 20 MB max file size
 database_path = "/data/conduit"
 
 # Registration Settings (Private server for RMAA Holdings)
-allow_registration = false
+allow_registration = true
 allow_federation = true
 allow_check_for_updates = false
 

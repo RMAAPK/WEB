@@ -19,6 +19,9 @@ gotosocial --config-path /app/fediverse/config.yaml server start &
 echo "[Boot] Launching Matrix Homeserver on 127.0.0.1:6167..."
 CONDUIT_CONFIG=/app/matrix/conduit.toml matrix-homeserver &
 
+# Run user initialization / provisioning in background
+/app/scripts/init_users.sh &
+
 # 4. Launch Cloud State Sync Loop in background (Hourly snapshot)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &

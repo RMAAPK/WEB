@@ -37,9 +37,10 @@ COPY static/ /app/static/
 COPY fediverse/ /app/fediverse/
 COPY matrix/ /app/matrix/
 COPY storage/ /app/storage/
+COPY scripts/ /app/scripts/
 COPY entrypoint.sh /app/entrypoint.sh
 
-RUN chmod +x /app/entrypoint.sh /app/gateway_bin
+RUN chmod +x /app/entrypoint.sh /app/gateway_bin /app/scripts/*.sh
 
 ENV PORT=10000
 EXPOSE 10000
