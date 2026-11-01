@@ -9,15 +9,15 @@ if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py restore || true
 fi
 
-mkdir -p /data/matrix /data/gotosocial
+mkdir -p /data/matrix /data/gotosocial/storage
 
-# 2. Launch GoToSocial (Mastodon API Daemon) in background
-echo "[Boot] Launching GoToSocial on 127.0.0.1:8080..."
-gotosocial --config-path /app/fediverse/config.yaml server start &
+# 2. Launch GoToSocial (Mastodon API Daemon) in background with direct stdout/stderr logging
+echo "[Boot] Launching GoToSocial on 0.0.0.0:8080..."
+gotosocial --config-path /app/fediverse/config.yaml server start >/tmp/gts.log 2>&1 &
 
 # 3. Launch Matrix Homeserver (Tuwunel / Conduit) in background
 echo "[Boot] Launching Matrix Homeserver on 127.0.0.1:6167..."
-CONDUIT_CONFIG=/app/matrix/conduit.toml matrix-homeserver &
+CONDUIT_CONFIG=/app/matrix/conduit.toml matrix-homeserver >/tmp/matrix.log 2>&1 &
 
 # Run user initialization / provisioning in background
 /app/scripts/init_users.sh &
