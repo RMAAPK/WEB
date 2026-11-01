@@ -7,10 +7,11 @@ domain: "s.rmaa.pk"
 port: 8080
 bind-address: "0.0.0.0"
 
-# Database Configuration (Supabase Postgres)
+# Database Configuration (Supabase Session Pooler on Port 5432)
+# Required for ORM prepared statements support
 db-type: "postgres"
 db-address: "aws-0-ap-southeast-1.pooler.supabase.com"
-db-port: 6543
+db-port: 5432
 db-database: "postgres"
 db-user: "postgres.qcgumwmldtlcykmcxqjz"
 db-password: "ZgBEOFGDZM1oYGtZ"
@@ -23,7 +24,7 @@ storage-local-base-path: "/data/gotosocial/storage"
 # Web UI & Landing Behavior
 landing-page-user: ""
 instance-feed-enabled: false
-accounts-registration-open: true # Allows signup for your account
+accounts-registration-open: true
 
 # Federation Settings
 federation-enabled: true
