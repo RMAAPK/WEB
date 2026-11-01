@@ -18,29 +18,101 @@ import time
 import json
 import requests
 import threading
+import psycopg2
+from typing import Dict, Any
 
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 HOMESERVER_URL = "http://127.0.0.1:6167"
 SERVER_NAME = os.getenv("SERVER_NAME", "s.rmaa.pk")
+REG_TOKEN = "RMAA-302-SECRET"
 
-# Model routing map
-BOT_CONFIGS = {
+# Fallback default configurations if DB is momentarily unreachable
+FALLBACK_BOTS = {
     "claude": {
         "model": "anthropic/claude-3.5-sonnet",
         "display_name": "Claude 3.5 Sonnet",
-        "system_prompt": "You are Claude 3.5 Sonnet, an AI assistant running inside the RMAA Server Matrix Network for @thealidev. Keep your answers direct, technical, and precise."
+        "system_prompt": "You are Claude 3.5 Sonnet, an AI assistant running inside the RMAA Server Matrix Network for @thealidev. Keep your answers direct, technical, and precise.",
+        "temperature": 0.3,
+        "max_tokens": 1024
     },
     "gemini": {
         "model": "google/gemini-2.5-flash",
         "display_name": "Gemini 2.5 Flash",
-        "system_prompt": "You are Gemini, an ultra-fast multimodal AI assistant inside the RMAA Server Matrix Network for @thealidev. Provide concise, sharp, high-velocity engineering insights."
+        "system_prompt": "You are Gemini, an ultra-fast multimodal AI assistant inside the RMAA Server Matrix Network for @thealidev. Provide concise, sharp, high-velocity engineering insights.",
+        "temperature": 0.3,
+        "max_tokens": 1024
     },
     "chatgpt": {
         "model": "openai/gpt-4o",
         "display_name": "ChatGPT (GPT-4o)",
-        "system_prompt": "You are ChatGPT (GPT-4o), operating natively inside the RMAA Server Matrix Network for @thealidev. Be concise, mathematically accurate, and proactive."
+        "system_prompt": "You are ChatGPT (GPT-4o), operating natively inside the RMAA Server Matrix Network for @thealidev. Be concise, mathematically accurate, and proactive.",
+        "temperature": 0.3,
+        "max_tokens": 1024
     }
 }
+
+
+def get_db_connection():
+    """Connects to Supabase PostgreSQL database."""
+    if not DATABASE_URL:
+        # Construct from GTS env vars if DATABASE_URL is not set directly
+        db_user = os.getenv("GTS_DB_USER", "postgres.qcgumwmldtlcykmcxqjz")
+        db_pass = os.getenv("GTS_DB_PASSWORD", "ZgBEOFGDZM1oYGtZ")
+        db_host = os.getenv("GTS_DB_ADDRESS", "aws-0-ap-southeast-1.pooler.supabase.com")
+        db_port = os.getenv("GTS_DB_PORT", "5432")
+        db_name = os.getenv("GTS_DB_DATABASE", "postgres")
+        return psycopg2.connect(f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?sslmode=disable")
+    return psycopg2.connect(DATABASE_URL)
+
+
+def load_bots_from_db() -> Dict[str, Dict[str, Any]]:
+    """Loads active bot personas dynamically from the PostgreSQL bot_registry table."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT username, display_name, model, system_prompt, temperature, max_tokens 
+            FROM bot_registry 
+            WHERE enabled = true;
+        """)
+        rows = cur.fetchall()
+        conn.close()
+
+        if rows:
+            bots = {}
+            for r in rows:
+                bots[r[0]] = {
+                    "display_name": r[1],
+                    "model": r[2],
+                    "system_prompt": r[3],
+                    "temperature": float(r[4] or 0.3),
+                    "max_tokens": int(r[5] or 1024)
+                }
+            return bots
+    except Exception as e:
+        print(f"[DB Registry] Failed to read bot_registry from database: {e}. Using fallbacks.")
+    return FALLBACK_BOTS
+
+
+def register_and_login_bot(bot_user: str) -> str:
+    """Provisions bot account dynamically on Matrix and acquires access token."""
+    bot_pass = f"RMAA-BOT-SECRET-AUTH-{bot_user}"
+    # 1. Register
+    requests.post(
+        f"{HOMESERVER_URL}/_matrix/client/v3/register",
+        json={"username": bot_user, "password": bot_pass, "auth": {"type": "m.login.registration_token", "token": REG_TOKEN}},
+        timeout=5
+    )
+    # 2. Login
+    resp = requests.post(
+        f"{HOMESERVER_URL}/_matrix/client/v3/login",
+        json={"type": "m.login.password", "identifier": {"type": "m.id.user", "user": bot_user}, "password": bot_pass},
+        timeout=5
+    )
+    if resp.status_code == 200:
+        return resp.json().get("access_token", "")
+    return ""
 
 
 def call_replicate(model_name: str, prompt: str, system_prompt: str) -> str:
@@ -92,14 +164,19 @@ class MatrixBot(threading.Thread):
 
     def load_token(self):
         token_path = f"/tmp/token_{self.bot_user}.txt"
-        for _ in range(30):
-            if os.path.exists(token_path):
-                with open(token_path, "r") as f:
-                    self.token = f.read().strip()
-                if self.token:
-                    print(f"[{self.bot_user}] Token loaded successfully.")
-                    return True
-            time.sleep(1)
+        if os.path.exists(token_path):
+            with open(token_path, "r") as f:
+                self.token = f.read().strip()
+            if self.token:
+                return True
+
+        # Acquire token dynamically via registration/login
+        self.token = register_and_login_bot(self.bot_user)
+        if self.token:
+            with open(token_path, "w") as f:
+                f.write(self.token)
+            print(f"[{self.bot_user}] Token generated dynamically from database user.")
+            return True
         return False
 
     def headers(self):
@@ -189,14 +266,17 @@ class MatrixBot(threading.Thread):
 
 
 def start_all_bots():
-    print("[AI Bots] Launching headless Matrix AI bots...")
+    print("[AI Bots] Reading bot registry dynamically from database...")
+    active_bots = load_bots_from_db()
+    print(f"[AI Bots] Loaded {len(active_bots)} active bot personas from database: {list(active_bots.keys())}")
+
     threads = []
-    for bot_name, cfg in BOT_CONFIGS.items():
+    for bot_name, cfg in active_bots.items():
         bot = MatrixBot(bot_name, cfg)
         bot.start()
         threads.append(bot)
 
-    # Keep alive
+    # Hot-reload check loop every 60 seconds
     while True:
         time.sleep(60)
 
