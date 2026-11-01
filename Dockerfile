@@ -1,8 +1,8 @@
 # ==============================================================================
 # Multi-Stage Minimal Alpine Container for RMAA Core Server
 # - RMAA Gateway (Single-Port Router + Middle Finger Landing Page)
-# - GoToSocial (Mastodon ActivityPub Daemon) from Codeberg release
-# - Tuwunel/Conduit (Matrix Homeserver Daemon) from GHCR official image
+# - GoToSocial (Mastodon ActivityPub Daemon) from superseriousbusiness/gotosocial
+# - Conduit (Matrix Homeserver Daemon) from matrixconduit/matrix-conduit
 # ==============================================================================
 
 # Stage 1: Build RMAA Micro-Gateway
@@ -12,10 +12,13 @@ COPY gateway/ ./gateway/
 COPY static/ ./static/
 RUN cd gateway && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/gateway_bin main.go
 
-# Stage 2: Extract official Tuwunel (Conduit successor) binary
-FROM ghcr.io/matrix-construct/tuwunel:latest AS matrix-source
+# Stage 2: Extract official GoToSocial binary
+FROM superseriousbusiness/gotosocial:latest AS gotosocial-source
 
-# Stage 3: Production Minimal Runtime
+# Stage 3: Extract official Conduit binary
+FROM matrixconduit/matrix-conduit:latest AS conduit-source
+
+# Stage 4: Production Minimal Runtime
 FROM alpine:3.19
 
 RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
@@ -23,13 +26,11 @@ RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
 
 WORKDIR /app
 
-# Install GoToSocial directly from Codeberg verified release
-ARG GTS_VERSION=0.17.0
-RUN curl -sSL https://codeberg.org/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_linux_amd64.tar.gz \
-    | tar -xz -C /usr/local/bin/ gotosocial
-
-# Copy Matrix binary from official image
-COPY --from=matrix-source /usr/local/bin/tuwunel /usr/local/bin/matrix-homeserver
+# Copy binaries from respective image stages:
+# In superseriousbusiness/gotosocial: /gotosocial/gotosocial
+# In matrixconduit/matrix-conduit: /usr/local/bin/matrix-conduit
+COPY --from=gotosocial-source /gotosocial/gotosocial /usr/local/bin/gotosocial
+COPY --from=conduit-source /usr/local/bin/matrix-conduit /usr/local/bin/matrix-homeserver
 
 # Copy Gateway binary
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
