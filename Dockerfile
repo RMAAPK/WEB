@@ -1,8 +1,8 @@
 # ==============================================================================
-# Multi-Stage Enterprise Scratch Container for RMAA Core Server
-# Copies pre-compiled binaries directly from official images:
+# Multi-Stage Container for RMAA Core Server
+# Copies binaries directly from official images:
 # - GoToSocial (Mastodon ActivityPub Daemon) from superseriousbusiness/gotosocial
-# - Conduit (Matrix Homeserver Daemon) from matrixconduit/matrix-conduit
+# - Conduit (Matrix Homeserver Daemon) from matrixconduit/matrix-conduit (/usr/sbin/matrix-conduit)
 # - RMAA Gateway (Single-port router + 403 Middle Finger Page) from Go Alpine
 # Total Container Memory: ~80-120 MB RAM (Fits perfectly in 512 MB Render Free Tier)
 # ==============================================================================
@@ -28,9 +28,10 @@ RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
 
 WORKDIR /app
 
-# Copy binaries from respective image stages
+# Copy binaries from respective image stages:
+# Note: In matrixconduit/matrix-conduit, the binary is at /usr/sbin/matrix-conduit
 COPY --from=gotosocial-source /gotosocial/gotosocial /usr/local/bin/gotosocial
-COPY --from=conduit-source /conduit /usr/local/bin/conduit
+COPY --from=conduit-source /usr/sbin/matrix-conduit /usr/local/bin/conduit
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
 # Copy configs, scripts, and landing page
