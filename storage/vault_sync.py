@@ -1,18 +1,41 @@
 import os
 import sys
 import time
+import hashlib
 import requests
 from huggingface_hub import HfApi, create_repo
 
-HF_REPO_NAME = os.getenv("HF_BACKUP_REPO", "rmaapk/rmaa-server-vault")
+HF_REPO_NAME = os.getenv("HF_BACKUP_REPO", "rmaaserver/storagepool")
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 CONDUIT_DATA_DIR = os.getenv("CONDUIT_DATA_DIR", "/data/conduit")
 GTS_DATA_DIR = os.getenv("GTS_DATA_DIR", "/data/gotosocial")
 
-def upload_snapshot():
-    """Upload encrypted state snapshot to Hugging Face private repository."""
+LAST_HASH = None
+
+def get_dir_state_hash(directory="/data"):
+    """Quickly hashes file modified times and sizes across /data to detect changes."""
+    if not os.path.exists(directory):
+        return ""
+    hasher = hashlib.md5()
+    for root, _, files in os.walk(directory):
+        for f in files:
+            p = os.path.join(root, f)
+            try:
+                st = os.stat(p)
+                hasher.update(f"{f}:{st.st_mtime}:{st.st_size}".encode("utf-8"))
+            except Exception:
+                pass
+    return hasher.hexdigest()
+
+def upload_snapshot(force=False):
+    """Upload encrypted state snapshot to Hugging Face private repository with Git-Xet efficiency."""
+    global LAST_HASH
     if not HF_TOKEN:
-        print("[Vault Sync] No HF_TOKEN provided. Skipping cloud persistence.")
+        return
+
+    # Check if data actually changed
+    current_hash = get_dir_state_hash("/data")
+    if not force and current_hash == LAST_HASH:
         return
 
     api = HfApi(token=HF_TOKEN)
@@ -27,15 +50,19 @@ def upload_snapshot():
     os.system(f"tar -czf {archive_path} -C /data . 2>/dev/null")
 
     if os.path.exists(archive_path):
-        print(f"[Vault Sync] Uploading state archive ({os.path.getsize(archive_path)} bytes)...")
-        api.upload_file(
-            path_or_fileobj=archive_path,
-            path_in_repo="snapshots/latest_vault.tar.gz",
-            repo_id=HF_REPO_NAME,
-            repo_type="dataset",
-            commit_message=f"chore(vault): automated snapshot commit at {time.strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        print("[Vault Sync] Snapshot committed successfully to HF Vault.")
+        try:
+            api.upload_file(
+                path_or_fileobj=archive_path,
+                path_in_repo="snapshots/latest_vault.tar.gz",
+                repo_id=HF_REPO_NAME,
+                repo_type="dataset",
+                commit_message=f"chore(vault): real-time state sync ({time.strftime('%Y-%m-%d %H:%M:%S')})"
+            )
+            LAST_HASH = current_hash
+            print(f"[Vault Sync] Real-time state synchronized to Git-Xet vault.")
+        except Exception as e:
+            # If rate-limited or transient network error, wait for next tick
+            print(f"[Vault Sync] Sync deferred: {e}")
 
 def restore_snapshot():
     """Restore state snapshot on container cold boot."""
@@ -64,8 +91,8 @@ if __name__ == "__main__":
         restore_snapshot()
     elif len(sys.argv) > 1 and sys.argv[1] == "loop":
         while True:
-            time.sleep(300) # Sync every 5 minutes
+            time.sleep(0.5) # 500ms reactive loop
             upload_snapshot()
     else:
-        upload_snapshot()
+        upload_snapshot(force=True)
 
