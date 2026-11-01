@@ -139,8 +139,56 @@ func main() {
 	}
 
 	log.Printf("[RMAA Core Server] Gateway listening on port %s for domain %s\n", port, domainName)
+
+	// Launch background self-ping loop every 10-14 minutes
+	go startSelfPingLoop()
+
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
+	}
+}
+
+// startSelfPingLoop periodically sends an HTTP GET request to the public domain (s.rmaa.pk / rmaa-server.onrender.com)
+// every 10 to 14 minutes with randomized jitter to prevent Render Free tier inactivity sleep.
+func startSelfPingLoop() {
+	publicURL := getEnv("PUBLIC_PING_URL", "https://s.rmaa.pk/healthz")
+	backupURL := "https://rmaa-server.onrender.com/healthz"
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+
+	for {
+		// Interval between 10m (600s) and 13.5m (810s)
+		jitterSeconds := 600 + (time.Now().UnixNano() % 210)
+		sleepDuration := time.Duration(jitterSeconds) * time.Second
+		time.Sleep(sleepDuration)
+
+		log.Printf("[KeepAlive] Self-pinging public endpoints to keep Render container warm (interval: %v)...", sleepDuration)
+
+		// 1. Ping primary custom domain
+		req, err := http.NewRequest("GET", publicURL, nil)
+		if err == nil {
+			req.Header.Set("User-Agent", "RMAA-Internal-KeepAlive/1.0")
+			resp, err := client.Do(req)
+			if err == nil {
+				resp.Body.Close()
+				log.Printf("[KeepAlive] %s responded: %s", publicURL, resp.Status)
+				continue
+			} else {
+				log.Printf("[KeepAlive] Warning: Failed to ping %s: %v", publicURL, err)
+			}
+		}
+
+		// 2. Fallback to render origin domain if custom domain is unreachable
+		reqBackup, err := http.NewRequest("GET", backupURL, nil)
+		if err == nil {
+			reqBackup.Header.Set("User-Agent", "RMAA-Internal-KeepAlive/1.0")
+			resp, err := client.Do(reqBackup)
+			if err == nil {
+				resp.Body.Close()
+				log.Printf("[KeepAlive] Fallback %s responded: %s", backupURL, resp.Status)
+			}
+		}
 	}
 }
 
