@@ -92,6 +92,7 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Matrix Protocol Traffic: /_matrix/*
 	if strings.HasPrefix(path, "/_matrix/") {
+		r.Host = "127.0.0.1:6167"
 		matrixProxy.ServeHTTP(w, r)
 		return
 	}
@@ -117,6 +118,7 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(path, "/outbox")
 
 	if isFediverseRoute || (isActivityPub && path != "/") {
+		r.Host = domainName
 		fediverseProxy.ServeHTTP(w, r)
 		return
 	}

@@ -5,10 +5,9 @@
 host: "s.rmaa.pk"
 domain: "s.rmaa.pk"
 port: 8080
-bind-address: "0.0.0.0"
+bind-address: "127.0.0.1"
 
 # Database Configuration (Supabase Session Pooler on Port 5432)
-# Required for ORM prepared statements support
 db-type: "postgres"
 db-address: "aws-0-ap-southeast-1.pooler.supabase.com"
 db-port: 5432
