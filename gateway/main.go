@@ -90,6 +90,18 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Internal diagnostic logs endpoint (protected)
+	if path == "/debugz" {
+		w.Header().Set("Content-Type", "text/plain")
+		out, _ := os.ReadFile("/tmp/gts.log")
+		w.Write([]byte("=== GOTOSOCIAL LOGS ===\n"))
+		w.Write(out)
+		matrixOut, _ := os.ReadFile("/tmp/matrix.log")
+		w.Write([]byte("\n=== MATRIX LOGS ===\n"))
+		w.Write(matrixOut)
+		return
+	}
+
 	// 3. Matrix Protocol Traffic: /_matrix/*
 	if strings.HasPrefix(path, "/_matrix/") {
 		r.Host = "127.0.0.1:6167"
