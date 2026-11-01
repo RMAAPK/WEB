@@ -28,6 +28,10 @@ if [ -n "$REPLICATE_API_TOKEN" ]; then
     python3 /app/scripts/matrix_ai_bots.py >/tmp/ai_bots.log 2>&1 &
 fi
 
+# Launch MusicAI Microservice Engine on port 9090
+echo "[Boot] Launching MusicAI Engine on 127.0.0.1:9090..."
+python3 /app/scripts/music_server.py >/tmp/music.log 2>&1 &
+
 # 4. Launch Cloud State Sync Loop in background (500ms reactive loop)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &

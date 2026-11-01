@@ -18,15 +18,17 @@ import (
 // 3. Middle Finger Landing Page for browser visitors on "/" and non-protocol routes
 
 const (
-	defaultPort       = "10000"
-	defaultMatrixURL  = "http://127.0.0.1:6167"
+	defaultPort         = "10000"
+	defaultMatrixURL    = "http://127.0.0.1:6167"
 	defaultFediverseURL = "http://127.0.0.1:8080"
-	domainName        = "s.rmaa.pk"
+	defaultMusicURL     = "http://127.0.0.1:9090"
+	domainName          = "s.rmaa.pk"
 )
 
 var (
 	matrixProxy    *httputil.ReverseProxy
 	fediverseProxy *httputil.ReverseProxy
+	musicProxy     *httputil.ReverseProxy
 	landingPageHTML []byte
 )
 
@@ -42,6 +44,9 @@ func init() {
 
 	fediverseTarget, _ := url.Parse(getEnv("FEDIVERSE_UPSTREAM_URL", defaultFediverseURL))
 	fediverseProxy = httputil.NewSingleHostReverseProxy(fediverseTarget)
+
+	musicTarget, _ := url.Parse(getEnv("MUSIC_UPSTREAM_URL", defaultMusicURL))
+	musicProxy = httputil.NewSingleHostReverseProxy(musicTarget)
 }
 
 func getEnv(key, fallback string) string {
@@ -109,7 +114,14 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Fediverse / Mastodon Protocol Traffic:
+	// 4. MusicAI Engine Traffic: /music/*
+	if strings.HasPrefix(path, "/music/") || path == "/music" {
+		r.Host = "127.0.0.1:9090"
+		musicProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// 5. Fediverse / Mastodon Protocol Traffic:
 	// - Webfinger (discovery for user@s.rmaa.pk)
 	// - ActivityPub json endpoints (application/activity+json, application/ld+json)
 	// - Mastodon Client API (/api/v1/*, /api/v2/*, /oauth/*)
