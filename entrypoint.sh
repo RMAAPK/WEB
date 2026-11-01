@@ -17,7 +17,7 @@ gotosocial --config-path /app/fediverse/config.yaml server start &
 
 # 3. Launch Conduit (Matrix Homeserver Daemon) in background
 echo "[Boot] Launching Conduit on 127.0.0.1:6167..."
-CONDUIT_CONFIG=/app/matrix/conduit.toml /app/conduit &
+CONDUIT_CONFIG=/app/matrix/conduit.toml conduit &
 
 # 4. Launch Cloud State Sync Loop in background (Hourly snapshot)
 if [ -n "$HF_TOKEN" ]; then
