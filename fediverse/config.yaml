@@ -1,0 +1,29 @@
+#####################################
+##### GOTOSOCIAL CONFIGURATION ######
+#####################################
+# Domain & Host
+host: "s.rmaa.pk"
+domain: "s.rmaa.pk"
+port: 8080
+bind-address: "127.0.0.1"
+
+# Database Configuration (Supabase Postgres)
+# Pass via environment variable: GTS_DB_ADDRESS
+db-type: "postgres"
+db-database: "postgres"
+db-tls-mode: "require"
+
+# Storage Configuration
+# Uses external S3/IPFS bridge or local ephemeral synced to HF
+storage-backend: "s3"
+storage-s3-proxy: true
+
+# Web UI & Landing Behavior
+# We disable the built-in landing page so our gateway renders the middle finger page
+landing-page-user: ""
+instance-feed-enabled: false
+accounts-registration-open: false # Private server for RMAA
+
+# Federation Settings
+federation-enabled: true
+software-name: "RMAA-Social"

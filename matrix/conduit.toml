@@ -1,0 +1,20 @@
+[global]
+# Matrix Server Name
+server_name = "s.rmaa.pk"
+
+# Networking
+port = 6167
+address = "127.0.0.1"
+max_request_size = 20_000_000 # 20 MB max file size
+
+# Database: High-speed embedded RocksDB / Sled cached on memory
+# Persistent state snapshot synced to Supabase / HF storage
+database_path = "/data/conduit"
+
+# Registration Settings (Private server for RMAA Holdings)
+allow_registration = false
+allow_federation = true
+allow_check_for_updates = false
+
+# Memory optimization for 512 MB Render Free limit
+rocksdb_cache_capacity_mb = 32

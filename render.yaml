@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: rmaa-server
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MATRIX_UPSTREAM_URL
+        value: http://127.0.0.1:6167
+      - key: FEDIVERSE_UPSTREAM_URL
+        value: http://127.0.0.1:8080
+      - key: GTS_DB_ADDRESS
+        sync: false # Set in Render dashboard: Supabase Postgres URI
+      - key: HF_TOKEN
+        sync: false # Set in Render dashboard: Hugging Face Access Token
+      - key: HF_BACKUP_REPO
+        value: rmaapk/rmaa-server-vault

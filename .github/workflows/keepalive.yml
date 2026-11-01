@@ -1,0 +1,17 @@
+name: Keep Alive Heartbeat
+
+on:
+  schedule:
+    # Ping every 10 minutes to prevent Render Free instance from sleeping
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping RMAA Server
+        run: |
+          echo "Pinging https://s.rmaa.pk/healthz..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://s.rmaa.pk/healthz || true)
+          echo "Response code: $HTTP_STATUS"
