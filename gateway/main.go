@@ -135,7 +135,16 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. Fediverse / Mastodon Protocol Traffic
+	// 6. Production Website Static Assets (Checked before Fediverse to serve frontend assets cleanly)
+	cleanPath := strings.TrimPrefix(path, "/")
+	if cleanPath != "" {
+		if _, err := os.Stat("static/" + cleanPath); err == nil {
+			staticFS.ServeHTTP(w, r)
+			return
+		}
+	}
+
+	// 7. Fediverse / Mastodon Protocol Traffic
 	isActivityPub := strings.Contains(acceptHeader, "application/activity+json") ||
 		strings.Contains(acceptHeader, "application/ld+json") ||
 		strings.Contains(acceptHeader, "application/json")
@@ -148,28 +157,17 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(path, "/api/v2/") ||
 		strings.HasPrefix(path, "/oauth/") ||
 		strings.HasPrefix(path, "/auth/") ||
-		strings.HasPrefix(path, "/assets/") ||
 		strings.HasPrefix(path, "/users/") ||
 		strings.HasPrefix(path, "/inbox") ||
 		strings.HasPrefix(path, "/outbox")
 
 	if isFediverseRoute || (isActivityPub && path != "/") {
-		r.Host = domainName
+		r.Host = "s.rmaa.pk"
 		fediverseProxy.ServeHTTP(w, r)
 		return
 	}
 
-	// 7. Production Website & SPA Router
-	// Check if requested static file exists in static/
-	cleanPath := strings.TrimPrefix(path, "/")
-	if cleanPath != "" {
-		if _, err := os.Stat("static/" + cleanPath); err == nil {
-			staticFS.ServeHTTP(w, r)
-			return
-		}
-	}
-
-	// Serve index.html for root and SPA client-side routes
+	// 8. Serve index.html for root and SPA client-side routes
 	http.ServeFile(w, r, "static/index.html")
 }
 
