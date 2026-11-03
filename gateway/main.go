@@ -25,6 +25,9 @@ const (
 	defaultFediverseURL = "http://127.0.0.1:8080"
 	defaultMusicURL     = "http://127.0.0.1:9090"
 	defaultWadbURL      = "http://127.0.0.1:3000"
+	defaultLocaljitURL  = "http://127.0.0.1:7470"
+	defaultDmcpsURL     = "http://127.0.0.1:8000"
+	defaultUpaasURL     = "http://127.0.0.1:9100"
 	domainName          = "rmaa.pk"
 )
 
@@ -33,6 +36,9 @@ var (
 	fediverseProxy *httputil.ReverseProxy
 	musicProxy     *httputil.ReverseProxy
 	wadbProxy      *httputil.ReverseProxy
+	localjitProxy  *httputil.ReverseProxy
+	dmcpsProxy     *httputil.ReverseProxy
+	upaasProxy     *httputil.ReverseProxy
 	staticFS       http.Handler
 )
 
@@ -50,6 +56,15 @@ func init() {
 
 	wadbTarget, _ := url.Parse(getEnv("WADB_UPSTREAM_URL", defaultWadbURL))
 	wadbProxy = httputil.NewSingleHostReverseProxy(wadbTarget)
+
+	localjitTarget, _ := url.Parse(getEnv("LOCALJIT_UPSTREAM_URL", defaultLocaljitURL))
+	localjitProxy = httputil.NewSingleHostReverseProxy(localjitTarget)
+
+	dmcpsTarget, _ := url.Parse(getEnv("DMCPS_UPSTREAM_URL", defaultDmcpsURL))
+	dmcpsProxy = httputil.NewSingleHostReverseProxy(dmcpsTarget)
+
+	upaasTarget, _ := url.Parse(getEnv("UPAAS_UPSTREAM_URL", defaultUpaasURL))
+	upaasProxy = httputil.NewSingleHostReverseProxy(upaasTarget)
 }
 
 func getEnv(key, fallback string) string {
@@ -135,13 +150,52 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. Dedicated Sub-Pages: /forge and /alicnc
+	// 6. Local-JIT Zero-Knowledge Vault: /localjit/* or /jit/*
+	if strings.HasPrefix(path, "/localjit") || strings.HasPrefix(path, "/jit") {
+		r.URL.Path = strings.TrimPrefix(path, "/localjit")
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/jit")
+		if r.URL.Path == "" {
+			r.URL.Path = "/health"
+		}
+		r.Host = "127.0.0.1:7470"
+		localjitProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// 7. DMCPS Secured Model Context Protocol: /mcp/* or /dmcps/*
+	if strings.HasPrefix(path, "/mcp") || strings.HasPrefix(path, "/dmcps") {
+		r.URL.Path = strings.TrimPrefix(path, "/mcp")
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/dmcps")
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+		r.Host = "127.0.0.1:8000"
+		dmcpsProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// 8. UPAAS Pipeline Engine: /upaas/*
+	if strings.HasPrefix(path, "/upaas") {
+		r.URL.Path = strings.TrimPrefix(path, "/upaas")
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+		r.Host = "127.0.0.1:9100"
+		upaasProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// 9. Dedicated Sub-Pages: /forge, /alicnc, /fargolore
 	if path == "/forge" || path == "/forge/" {
 		http.ServeFile(w, r, "static/forge/index.html")
 		return
 	}
 	if path == "/alicnc" || path == "/alicnc/" {
 		http.ServeFile(w, r, "static/alicnc/index.html")
+		return
+	}
+	if path == "/fargolore" || path == "/fargolore/" {
+		http.ServeFile(w, r, "static/fargolore/index.html")
 		return
 	}
 

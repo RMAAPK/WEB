@@ -36,6 +36,24 @@ python3 /app/scripts/music_server.py >/tmp/music.log 2>&1 &
 echo "[Boot] Launching WA-DB Sentinel Daemon on 127.0.0.1:3000..."
 (cd /app/services/wadb && node src/index.js >/tmp/wadb.log 2>&1) &
 
+# Launch Local-JIT Zero-Knowledge Vault on port 7470
+if [ -f /app/services/localjit/server.py ]; then
+    echo "[Boot] Launching LocalJIT Vault on 127.0.0.1:7470..."
+    STORAGE_PATH=/data/vault PORT=7470 python3 -u /app/services/localjit/server.py >/tmp/localjit.log 2>&1 &
+fi
+
+# Launch DMCPS Secured Context Protocol Daemon on port 8000
+if [ -f /app/services/dmcps/dist/dashboard.js ]; then
+    echo "[Boot] Launching DMCPS Engine on 127.0.0.1:8000..."
+    (cd /app/services/dmcps && PORT=8000 node dist/dashboard.js >/tmp/dmcps.log 2>&1) &
+fi
+
+# Launch UPAAS Pipeline Engine on port 9100
+if [ -f /app/services/upaas/upaas/worker.py ]; then
+    echo "[Boot] Launching UPAAS Engine on 127.0.0.1:9100..."
+    (cd /app/services/upaas && PORT=9100 python3 -u upaas/worker.py >/tmp/upaas.log 2>&1) &
+fi
+
 # 4. Launch Cloud State Sync Loop in background (500ms reactive loop)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &
