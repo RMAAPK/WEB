@@ -41,6 +41,7 @@ static const Upstream UPSTREAM_WADB     = {"127.0.0.1", 3000};
 static const Upstream UPSTREAM_LOCALJIT = {"127.0.0.1", 7470};
 static const Upstream UPSTREAM_DMCPS    = {"127.0.0.1", 8000};
 static const Upstream UPSTREAM_UPAAS    = {"127.0.0.1", 9100};
+static const Upstream UPSTREAM_VAULT    = {"127.0.0.1", 8001};
 
 // Static MIME mapping
 static std::string get_mime_type(const std::string& path) {
@@ -307,6 +308,32 @@ static void handle_client(int client_fd) {
         if (sub_path.empty() || sub_path[0] != '/') sub_path = "/" + sub_path;
 
         proxy_request(client_fd, UPSTREAM_UPAAS, req, sub_path, "127.0.0.1:9100");
+        close(client_fd);
+        return;
+    }
+
+    // 8B. Vaultwarden / Bitwarden Password Vault & Identity Sync
+    // Handles Web Vault UI, Bitwarden Client API, Sync, Token Auth, and Notifications Hub
+    bool is_bitwarden_api = (path.rfind("/api/sync", 0) == 0) ||
+                            (path.rfind("/api/ciphers", 0) == 0) ||
+                            (path.rfind("/api/folders", 0) == 0) ||
+                            (path.rfind("/api/collections", 0) == 0) ||
+                            (path.rfind("/api/accounts", 0) == 0 && path != "/accounts" && path != "/accounts/") ||
+                            (path.rfind("/identity/", 0) == 0) ||
+                            (path.rfind("/icons/", 0) == 0) ||
+                            (path.rfind("/notifications/hub", 0) == 0) ||
+                            (path.rfind("/vault", 0) == 0);
+
+    if (is_bitwarden_api) {
+        std::string vault_path = full_path;
+        if (path == "/vault" || path == "/vault/") {
+            vault_path = "/";
+        } else if (path.rfind("/vault/", 0) == 0) {
+            vault_path = full_path.substr(6);
+            if (vault_path.empty() || vault_path[0] != '/') vault_path = "/" + vault_path;
+        }
+
+        proxy_request(client_fd, UPSTREAM_VAULT, req, vault_path, "rmaa.pk");
         close(client_fd);
         return;
     }

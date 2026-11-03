@@ -54,6 +54,40 @@ if [ -f /app/services/upaas/upaas/worker.py ]; then
     (cd /app/services/upaas && PORT=9100 python3 -u upaas/worker.py >/tmp/upaas.log 2>&1) &
 fi
 
+# Launch Vaultwarden / Bitwarden Zero-Knowledge Server on port 8001
+if command -v vaultwarden >/dev/null 2>&1; then
+    echo "[Boot] Launching Vaultwarden on 127.0.0.1:8001..."
+    mkdir -p /data/vaultwarden
+    export DATA_FOLDER=/data/vaultwarden
+    export ROCKET_ADDRESS=127.0.0.1
+    export ROCKET_PORT=8001
+    export WEB_VAULT_FOLDER=/app/web-vault
+    export DOMAIN="https://rmaa.pk/vault"
+    export WEBSOCKET_ENABLED=true
+    export WEBSOCKET_ADDRESS=127.0.0.1
+    export WEBSOCKET_PORT=3012
+    export SIGNUPS_ALLOWED=true
+    export INVITATIONS_ALLOWED=true
+
+    # OIDC / Privy Single Sign-On Hook
+    if [ -n "$PRIVY_APP_ID" ]; then
+        export SSO_ENABLED=true
+        export SSO_CLIENT_ID="$PRIVY_APP_ID"
+        export SSO_CLIENT_SECRET="$PRIVY_APP_SECRET"
+        export SSO_AUTHORITY="https://auth.privy.io/api/v1/apps/$PRIVY_APP_ID"
+        export SSO_SCOPES="openid profile email"
+        export SSO_SIGNUPS_MATCH_EMAIL=true
+        export SSO_PKCE=true
+    fi
+
+    # Connect to PostgreSQL if DATABASE_URL is set, otherwise falls back to SQLite
+    if [ -n "$DATABASE_URL" ]; then
+        export DATABASE_URL="$DATABASE_URL"
+    fi
+
+    vaultwarden >/tmp/vaultwarden.log 2>&1 &
+fi
+
 # 4. Launch Cloud State Sync Loop in background (500ms reactive loop)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &

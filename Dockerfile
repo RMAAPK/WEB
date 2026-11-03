@@ -3,8 +3,12 @@
 # - RMAA C++20 Micro-Gateway (Ultra Low Latency, Zero-Copy Static & Reverse Proxy)
 # - GoToSocial (Mastodon ActivityPub Daemon)
 # - Conduwuit / Conduit (Matrix Homeserver Daemon)
+# - Vaultwarden / Bitwarden Zero-Knowledge Vault with Privy SSO Hook
 # - WA-DB Sentinel (Dual WhatsApp Baileys Daemon)
 # ==============================================================================
+
+# Stage 0: Extract Vaultwarden Alpine Binary & Web Vault
+FROM vaultwarden/server:alpine AS vaultwarden-src
 
 # Stage 1: Build RMAA C++20 Micro-Gateway
 FROM alpine:3.19 AS gateway-builder
@@ -16,8 +20,13 @@ RUN g++ -std=c++20 -O3 -pthread -s -static-libstdc++ -static-libgcc -o /build/ga
 # Stage 2: Production Minimal Runtime
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates curl git python3 py3-pip nodejs npm tar tzdata \
+RUN apk add --no-cache ca-certificates curl git python3 py3-pip nodejs npm tar tzdata libpq \
     && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests
+
+# Copy Vaultwarden binary and web-vault assets from official alpine image
+COPY --from=vaultwarden-src /vaultwarden /usr/local/bin/vaultwarden
+COPY --from=vaultwarden-src /web-vault /app/web-vault
+RUN chmod +x /usr/local/bin/vaultwarden
 
 WORKDIR /gotosocial
 

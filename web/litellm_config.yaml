@@ -1,0 +1,121 @@
+# ──────────────────────────────────────────────
+# Ali CNC LiteLLM Proxy
+# Universal AI Gateway — rmaa.pk/litellm
+# ──────────────────────────────────────────────
+
+model_list:
+  # ── Replicate ──────────────────────────────
+  - model_name: llama-4-scout
+    litellm_params:
+      model: replicate/meta/llama-4-scout
+      api_key: os.environ/REPLICATE_API_TOKEN
+
+  - model_name: llama-4-maverick
+    litellm_params:
+      model: replicate/meta/llama-4-maverick
+      api_key: os.environ/REPLICATE_API_TOKEN
+
+  - model_name: deepseek-v3
+    litellm_params:
+      model: replicate/deepseek-ai/deepseek-v3.1
+      api_key: os.environ/REPLICATE_API_TOKEN
+
+  # ── OpenAI ─────────────────────────────────
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o3-mini
+    litellm_params:
+      model: openai/o3-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ── Google Gemini ──────────────────────────
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+
+  # ── Anthropic ──────────────────────────────
+  - model_name: claude-sonnet-4
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-opus-4
+    litellm_params:
+      model: anthropic/claude-opus-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ── Groq (Ultra-fast inference) ────────────
+  - model_name: groq-llama-3.3-70b
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-llama-3.1-8b
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-mixtral-8x7b
+    litellm_params:
+      model: groq/mixtral-8x7b-32768
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: groq-gemma2-9b
+    litellm_params:
+      model: groq/gemma2-9b-it
+      api_key: os.environ/GROQ_API_KEY
+
+  # ── Together AI ────────────────────────────
+  - model_name: together-llama-3.1-405b
+    litellm_params:
+      model: together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo
+      api_key: os.environ/TOGETHER_API_KEY
+
+  - model_name: together-llama-3.1-70b
+    litellm_params:
+      model: together_ai/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+      api_key: os.environ/TOGETHER_API_KEY
+
+  - model_name: together-qwen-2.5-72b
+    litellm_params:
+      model: together_ai/Qwen/Qwen2.5-72B-Instruct-Turbo
+      api_key: os.environ/TOGETHER_API_KEY
+
+  - model_name: together-deepseek-v3
+    litellm_params:
+      model: together_ai/deepseek-ai/DeepSeek-V3
+      api_key: os.environ/TOGETHER_API_KEY
+
+  - model_name: together-mixtral-8x22b
+    litellm_params:
+      model: together_ai/mistralai/Mixtral-8x22B-Instruct-v0.1
+      api_key: os.environ/TOGETHER_API_KEY
+
+  # ── RunPod (Self-hosted vLLM/TGI) ─────────
+  - model_name: runpod-vllm
+    litellm_params:
+      model: openai/default
+      api_base: os.environ/RUNPOD_BASE_URL
+      api_key: os.environ/RUNPOD_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  store_prompts_in_spend_logs: true
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
