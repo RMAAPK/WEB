@@ -376,9 +376,9 @@
       setStatus('Signed out.', 'info');
     };
 
-    // Check if user is already logged in
+    // Check if user is already logged in with verified session
     try {
-      if (privy.user) {
+      if (privy.user && privy.user.id) {
         showUserProfile(privy.user);
       }
     } catch (e) {}
