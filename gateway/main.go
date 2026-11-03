@@ -17,7 +17,7 @@ import (
 // 2. Mastodon / ActivityPub (GoToSocial) on localhost:8080
 // 3. MusicAI Engine on localhost:9090
 // 4. WA-DB Sentinel on localhost:3000
-// 5. Middle Finger Landing Page for browser visitors on "/" and non-protocol routes
+// 5. Official RMAA Holdings Production Website & Web SPA (static/)
 
 const (
 	defaultPort         = "10000"
@@ -25,23 +25,19 @@ const (
 	defaultFediverseURL = "http://127.0.0.1:8080"
 	defaultMusicURL     = "http://127.0.0.1:9090"
 	defaultWadbURL      = "http://127.0.0.1:3000"
-	domainName          = "s.rmaa.pk"
+	domainName          = "rmaa.pk"
 )
 
 var (
-	matrixProxy     *httputil.ReverseProxy
-	fediverseProxy  *httputil.ReverseProxy
-	musicProxy      *httputil.ReverseProxy
-	wadbProxy       *httputil.ReverseProxy
-	landingPageHTML []byte
+	matrixProxy    *httputil.ReverseProxy
+	fediverseProxy *httputil.ReverseProxy
+	musicProxy     *httputil.ReverseProxy
+	wadbProxy      *httputil.ReverseProxy
+	staticFS       http.Handler
 )
 
 func init() {
-	var err error
-	landingPageHTML, err = os.ReadFile("static/index.html")
-	if err != nil {
-		landingPageHTML = []byte("<h1>403 Forbidden - s.rmaa.pk</h1>")
-	}
+	staticFS = http.FileServer(http.Dir("static"))
 
 	matrixTarget, _ := url.Parse(getEnv("MATRIX_UPSTREAM_URL", defaultMatrixURL))
 	matrixProxy = httputil.NewSingleHostReverseProxy(matrixTarget)
@@ -163,10 +159,18 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 7. Default: Browser Landing Page
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusForbidden)
-	w.Write(landingPageHTML)
+	// 7. Production Website & SPA Router
+	// Check if requested static file exists in static/
+	cleanPath := strings.TrimPrefix(path, "/")
+	if cleanPath != "" {
+		if _, err := os.Stat("static/" + cleanPath); err == nil {
+			staticFS.ServeHTTP(w, r)
+			return
+		}
+	}
+
+	// Serve index.html for root and SPA client-side routes
+	http.ServeFile(w, r, "static/index.html")
 }
 
 func main() {
