@@ -11,7 +11,7 @@ fi
 
 mkdir -p /data/matrix /data/gotosocial/storage
 
-# 2. Launch GoToSocial (Mastodon API Daemon) in background with direct stdout/stderr logging
+# 2. Launch GoToSocial (Mastodon API Daemon) in background
 echo "[Boot] Launching GoToSocial on 0.0.0.0:8080..."
 gotosocial --config-path /app/fediverse/config.yaml server start >/tmp/gts.log 2>&1 &
 
@@ -32,12 +32,16 @@ fi
 echo "[Boot] Launching MusicAI Engine on 127.0.0.1:9090..."
 python3 /app/scripts/music_server.py >/tmp/music.log 2>&1 &
 
+# Launch WA-DB Sentinel Daemon on port 3000
+echo "[Boot] Launching WA-DB Sentinel Daemon on 127.0.0.1:3000..."
+(cd /app/services/wadb && node src/index.js >/tmp/wadb.log 2>&1) &
+
 # 4. Launch Cloud State Sync Loop in background (500ms reactive loop)
 if [ -n "$HF_TOKEN" ]; then
     python3 /app/storage/vault_sync.py loop &
 fi
 
-# Graceful shutdown handler to persist Matrix RocksDB state before Render terminates the container
+# Graceful shutdown handler
 cleanup() {
     echo "[Shutdown] SIGTERM/SIGINT received! Syncing latest state to Hugging Face Vault..."
     if [ -n "$HF_TOKEN" ]; then
@@ -47,7 +51,7 @@ cleanup() {
 }
 trap cleanup TERM INT
 
-# 5. Launch RMAA Gateway on $PORT (Front-facing Reverse Proxy & Middle Finger Page)
+# 5. Launch RMAA Gateway on $PORT (Front-facing Reverse Proxy & Router)
 echo "[Boot] Launching RMAA Gateway on :${PORT:-10000}..."
 /app/gateway_bin &
 GATEWAY_PID=$!

@@ -3,6 +3,7 @@
 # - RMAA Gateway (Single-Port Router + Middle Finger Landing Page)
 # - GoToSocial (Mastodon ActivityPub Daemon)
 # - Conduwuit / Conduit (Matrix Homeserver Daemon)
+# - WA-DB Sentinel (Dual WhatsApp Baileys Daemon)
 # ==============================================================================
 
 # Stage 1: Build RMAA Micro-Gateway
@@ -15,7 +16,7 @@ RUN cd gateway && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/g
 # Stage 2: Production Minimal Runtime
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates curl python3 py3-pip tar tzdata \
+RUN apk add --no-cache ca-certificates curl python3 py3-pip nodejs npm tar tzdata \
     && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests
 
 WORKDIR /gotosocial
@@ -32,15 +33,20 @@ RUN curl -sSL -o /usr/local/bin/matrix-homeserver "https://github.com/x86pup/con
 
 WORKDIR /app
 
+# Pre-install WA-DB Sentinel dependencies
+COPY services/wadb/package*.json /app/services/wadb/
+RUN cd /app/services/wadb && npm install --omit=dev --ignore-scripts || npm install --production
+
 # Copy Gateway binary from Stage 1
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
-# Copy configs, scripts, and landing page
+# Copy configs, scripts, services, and landing page
 COPY static/ /app/static/
 COPY fediverse/ /app/fediverse/
 COPY matrix/ /app/matrix/
 COPY storage/ /app/storage/
 COPY scripts/ /app/scripts/
+COPY services/ /app/services/
 COPY entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh /app/gateway_bin /app/scripts/*.sh

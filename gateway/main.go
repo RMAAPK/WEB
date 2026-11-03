@@ -15,20 +15,24 @@ import (
 // Hosts:
 // 1. Matrix Homeserver (Conduit / Conduwuit) on localhost:6167
 // 2. Mastodon / ActivityPub (GoToSocial) on localhost:8080
-// 3. Middle Finger Landing Page for browser visitors on "/" and non-protocol routes
+// 3. MusicAI Engine on localhost:9090
+// 4. WA-DB Sentinel on localhost:3000
+// 5. Middle Finger Landing Page for browser visitors on "/" and non-protocol routes
 
 const (
 	defaultPort         = "10000"
 	defaultMatrixURL    = "http://127.0.0.1:6167"
 	defaultFediverseURL = "http://127.0.0.1:8080"
 	defaultMusicURL     = "http://127.0.0.1:9090"
+	defaultWadbURL      = "http://127.0.0.1:3000"
 	domainName          = "s.rmaa.pk"
 )
 
 var (
-	matrixProxy    *httputil.ReverseProxy
-	fediverseProxy *httputil.ReverseProxy
-	musicProxy     *httputil.ReverseProxy
+	matrixProxy     *httputil.ReverseProxy
+	fediverseProxy  *httputil.ReverseProxy
+	musicProxy      *httputil.ReverseProxy
+	wadbProxy       *httputil.ReverseProxy
 	landingPageHTML []byte
 )
 
@@ -47,6 +51,9 @@ func init() {
 
 	musicTarget, _ := url.Parse(getEnv("MUSIC_UPSTREAM_URL", defaultMusicURL))
 	musicProxy = httputil.NewSingleHostReverseProxy(musicTarget)
+
+	wadbTarget, _ := url.Parse(getEnv("WADB_UPSTREAM_URL", defaultWadbURL))
+	wadbProxy = httputil.NewSingleHostReverseProxy(wadbTarget)
 }
 
 func getEnv(key, fallback string) string {
@@ -70,10 +77,6 @@ func handleMatrixClientWellKnown(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"m.homeserver": {"base_url": "https://%s"}}`, domainName)
 }
 
-// Router determines whether incoming request is:
-// - Browser visit (Show middle finger landing page)
-// - Matrix protocol request (Route to Conduit)
-// - Mastodon / ActivityPub federation request (Route to GoToSocial)
 func routerHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	acceptHeader := strings.ToLower(r.Header.Get("Accept"))
@@ -104,6 +107,9 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		matrixOut, _ := os.ReadFile("/tmp/matrix.log")
 		w.Write([]byte("\n=== MATRIX LOGS ===\n"))
 		w.Write(matrixOut)
+		wadbOut, _ := os.ReadFile("/tmp/wadb.log")
+		w.Write([]byte("\n=== WADB LOGS ===\n"))
+		w.Write(wadbOut)
 		return
 	}
 
@@ -121,11 +127,19 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Fediverse / Mastodon Protocol Traffic:
-	// - Webfinger (discovery for user@s.rmaa.pk)
-	// - ActivityPub json endpoints (application/activity+json, application/ld+json)
-	// - Mastodon Client API (/api/v1/*, /api/v2/*, /oauth/*)
-	// - Inboxes & Outboxes (/users/*/inbox, /users/*/outbox)
+	// 5. WA-DB Sentinel Traffic: /wadb/* or /wa/*
+	if strings.HasPrefix(path, "/wadb") || strings.HasPrefix(path, "/wa") {
+		r.URL.Path = strings.TrimPrefix(path, "/wadb")
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/wa")
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+		r.Host = "127.0.0.1:3000"
+		wadbProxy.ServeHTTP(w, r)
+		return
+	}
+
+	// 6. Fediverse / Mastodon Protocol Traffic
 	isActivityPub := strings.Contains(acceptHeader, "application/activity+json") ||
 		strings.Contains(acceptHeader, "application/ld+json") ||
 		strings.Contains(acceptHeader, "application/json")
@@ -149,8 +163,7 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Default: Any normal browser visitor hitting the root or unrecognized page
-	// gets the Middle Finger page
+	// 7. Default: Browser Landing Page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusForbidden)
 	w.Write(landingPageHTML)
@@ -168,7 +181,6 @@ func main() {
 
 	log.Printf("[RMAA Core Server] Gateway listening on port %s for domain %s\n", port, domainName)
 
-	// Launch background self-ping loop every 10-14 minutes
 	go startSelfPingLoop()
 
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -176,8 +188,6 @@ func main() {
 	}
 }
 
-// startSelfPingLoop periodically sends an HTTP GET request to the public domain (s.rmaa.pk / rmaa-server.onrender.com)
-// every 10 to 14 minutes with randomized jitter to prevent Render Free tier inactivity sleep.
 func startSelfPingLoop() {
 	publicURL := getEnv("PUBLIC_PING_URL", "https://s.rmaa.pk/healthz")
 	backupURL := "https://rmaa-server.onrender.com/healthz"
@@ -186,37 +196,29 @@ func startSelfPingLoop() {
 	}
 
 	for {
-		// Interval between 10m (600s) and 13.5m (810s)
 		jitterSeconds := 600 + (time.Now().UnixNano() % 210)
 		sleepDuration := time.Duration(jitterSeconds) * time.Second
 		time.Sleep(sleepDuration)
 
-		log.Printf("[KeepAlive] Self-pinging public endpoints to keep Render container warm (interval: %v)...", sleepDuration)
+		log.Printf("[KeepAlive] Self-pinging public endpoints (interval: %v)...", sleepDuration)
 
-		// 1. Ping primary custom domain
 		req, err := http.NewRequest("GET", publicURL, nil)
 		if err == nil {
 			req.Header.Set("User-Agent", "RMAA-Internal-KeepAlive/1.0")
 			resp, err := client.Do(req)
 			if err == nil {
 				resp.Body.Close()
-				log.Printf("[KeepAlive] %s responded: %s", publicURL, resp.Status)
 				continue
-			} else {
-				log.Printf("[KeepAlive] Warning: Failed to ping %s: %v", publicURL, err)
 			}
 		}
 
-		// 2. Fallback to render origin domain if custom domain is unreachable
 		reqBackup, err := http.NewRequest("GET", backupURL, nil)
 		if err == nil {
 			reqBackup.Header.Set("User-Agent", "RMAA-Internal-KeepAlive/1.0")
 			resp, err := client.Do(reqBackup)
 			if err == nil {
 				resp.Body.Close()
-				log.Printf("[KeepAlive] Fallback %s responded: %s", backupURL, resp.Status)
 			}
 		}
 	}
 }
-
