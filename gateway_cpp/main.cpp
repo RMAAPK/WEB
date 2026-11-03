@@ -311,7 +311,12 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    // 9. Dedicated Sub-Pages: /forge, /alicnc, /fargolore
+    // 9. Dedicated Sub-Pages: /admin, /forge, /alicnc, /fargolore
+    if (path == "/admin" || path == "/admin/") {
+        serve_static_file(client_fd, "static/admin/index.html");
+        close(client_fd);
+        return;
+    }
     if (path == "/forge" || path == "/forge/") {
         serve_static_file(client_fd, "static/forge/index.html");
         close(client_fd);
@@ -448,3 +453,4 @@ int main(int argc, char* argv[]) {
     close(server_fd);
     return 0;
 }
+
