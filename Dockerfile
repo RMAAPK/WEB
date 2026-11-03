@@ -1,17 +1,17 @@
 # ==============================================================================
-# Multi-Stage Minimal Alpine Container for RMAA Core Server
-# - RMAA Gateway (Single-Port Router + Middle Finger Landing Page)
+# Multi-Stage Container for RMAA Core Server
+# - RMAA C++20 Micro-Gateway (Ultra Low Latency, Zero-Copy Static & Reverse Proxy)
 # - GoToSocial (Mastodon ActivityPub Daemon)
 # - Conduwuit / Conduit (Matrix Homeserver Daemon)
 # - WA-DB Sentinel (Dual WhatsApp Baileys Daemon)
 # ==============================================================================
 
-# Stage 1: Build RMAA Micro-Gateway
-FROM golang:1.21-alpine AS gateway-builder
+# Stage 1: Build RMAA C++20 Micro-Gateway
+FROM alpine:3.19 AS gateway-builder
+RUN apk add --no-cache g++ make musl-dev
 WORKDIR /build
-COPY gateway/ ./gateway/
-COPY static/ ./static/
-RUN cd gateway && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/gateway_bin main.go
+COPY gateway_cpp/ ./
+RUN g++ -std=c++20 -O3 -pthread -s -static-libstdc++ -static-libgcc -o /build/gateway_bin main.cpp
 
 # Stage 2: Production Minimal Runtime
 FROM alpine:3.19
