@@ -270,10 +270,16 @@
   </div>
 
   <script type="module">
-    import { Privy } from 'https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core@0.36.0/+esm';
+    import Privy, { LocalStorage } from 'https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core@0.36.0/+esm';
 
     const PRIVY_APP_ID = 'cmw08immb006s0gl5tw66yy2x';
-    const privy = new Privy({ appId: PRIVY_APP_ID });
+    const PRIVY_CLIENT_ID = 'client-WY6fYRyfRnKXhCd9WS9Ew1GdmFvS7ZDTNuYBtLTs96aw1';
+
+    const privy = new Privy({
+      appId: PRIVY_APP_ID,
+      clientId: PRIVY_CLIENT_ID,
+      storage: new LocalStorage()
+    });
 
     let pendingEmail = '';
 
