@@ -34,7 +34,7 @@ RUN curl -sSL -o /usr/local/bin/matrix-homeserver "https://github.com/x86pup/con
 WORKDIR /app
 
 # Pre-install WA-DB Sentinel dependencies
-COPY services/wadb/package*.json /app/services/wadb/
+COPY services/wadb/package.json /app/services/wadb/
 RUN cd /app/services/wadb && npm install --omit=dev --ignore-scripts || npm install --production
 
 # Copy Gateway binary from Stage 1
