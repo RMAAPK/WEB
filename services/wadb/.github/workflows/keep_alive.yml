@@ -1,0 +1,21 @@
+name: WADB Sentinel Keep-Alive Cron
+
+on:
+  schedule:
+    # Run every 5 minutes 24/7/365 to guarantee Render container never sleeps
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-sentinel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping WA-DB Sentinel Endpoint
+        run: |
+          echo "Pinging WADB live endpoint..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://wadb-i1tk.onrender.com/ping")
+          echo "WADB ping status: HTTP $STATUS"
+          if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 301 ] && [ "$STATUS" -ne 302 ]; then
+            echo "Cold start wake triggered, pinging root..."
+            curl -s --max-time 30 "https://wadb-i1tk.onrender.com" || true
+          fi

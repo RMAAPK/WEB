@@ -1,0 +1,29 @@
+# Environment variables
+.env
+*.env
+*.env.*
+*.local
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sessions & Temporary Auth Tokens
+auth_info/
+wa_auth_*/
+*.tar.gz
+*_b64.txt
+/tmp/
+
+# Media and Logs
+*.log
+*.png
+*.jpg
+*.mp4
+media_vault/
+
+# System files
+.DS_Store
+Thumbs.db

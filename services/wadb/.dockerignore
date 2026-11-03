@@ -1,0 +1,12 @@
+node_modules
+.git
+.env
+*.tar.gz
+*.txt
+*.log
+*.png
+*.jpg
+auth_info
+wa_auth_*
+media_vault
+

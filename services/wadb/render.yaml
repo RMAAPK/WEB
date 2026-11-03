@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: wa-db-sentinel
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        value: https://osmcdstlwakpwuiksurr.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: wa-vault
+      - key: CALL_REJECT_MESSAGE
+        value: "Plz Refrain To Msges Only"
+      - key: ENABLE_CALL_CUTTER
+        value: "true"
+      - key: ENABLE_VIEW_ONCE_EXTRACTION
+        value: "true"
+      - key: ENABLE_ANTI_DELETE
+        value: "true"
+      - key: AUTO_PING_INTERVAL_MINUTES
+        value: "14"
+      - key: RENDER_EXTERNAL_URL
+        sync: false
+      - key: WA_AUTH_PERSONAL_B64
+        sync: false
+      - key: WA_AUTH_BUSINESS_B64
+        sync: false
+
