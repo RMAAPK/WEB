@@ -311,7 +311,12 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    // 9. Dedicated Sub-Pages: /admin, /forge, /alicnc, /fargolore
+    // 9. Dedicated Sub-Pages: /accounts, /admin, /forge, /alicnc, /fargolore
+    if (path == "/accounts" || path == "/accounts/") {
+        serve_static_file(client_fd, "static/accounts/index.html");
+        close(client_fd);
+        return;
+    }
     if (path == "/admin" || path == "/admin/") {
         serve_static_file(client_fd, "static/admin/index.html");
         close(client_fd);
