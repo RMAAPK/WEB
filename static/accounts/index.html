@@ -3,117 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RMAA Accounts • Universal Single Sign-On</title>
+  <title>RMAA Accounts | Universal Authentication</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #07090E;
-      --card-bg: #0E121B;
-      --card-border: #1E2638;
-      --accent: #38BDF8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
-      --danger: #EF4444;
+      --bg: #090A0F;
+      --card-bg: rgba(18, 20, 29, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #6366F1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
       --success: #10B981;
-      --text: #F3F4F6;
-      --text-muted: #8E9BAE;
+      --error: #EF4444;
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.12);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       background-color: var(--bg);
-      color: var(--text);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 65%),
+        radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+      color: var(--text-main);
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      background-image: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
     }
     .auth-card {
       background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 40px 36px;
-      max-width: 440px;
+      border-radius: 20px;
+      padding: 44px 36px;
       width: 100%;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      max-width: 460px;
       text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
     }
     .brand-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 6px 14px;
+      border-radius: 9999px;
       font-size: 11px;
-      font-weight: 800;
-      color: var(--accent);
-      letter-spacing: 1px;
-      margin-bottom: 24px;
-      font-family: 'Fira Code', monospace;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #A5B4FC;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .brand-pill span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
     }
     .auth-title {
       font-size: 26px;
-      font-weight: 800;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       margin-bottom: 8px;
-      color: #fff;
     }
     .auth-subtitle {
       font-size: 14px;
       color: var(--text-muted);
       line-height: 1.5;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
     .btn-submit {
       width: 100%;
-      background: var(--accent);
-      color: #07090E;
-      font-weight: 800;
-      padding: 16px;
-      border-radius: 10px;
+      background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
       border: none;
-      font-size: 15px;
+      border-radius: 10px;
+      padding: 13px 20px;
+      color: #FFF;
+      font-weight: 600;
+      font-size: 14px;
       cursor: pointer;
-      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      box-shadow: 0 10px 25px -5px var(--accent-glow);
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.35);
+      margin-top: 8px;
     }
-    .btn-submit:hover {
-      box-shadow: 0 12px 30px var(--accent-glow);
+    .btn-submit:hover:not(:disabled) {
       transform: translateY(-1px);
+      box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.45);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--input-border);
+      color: var(--text-muted);
+      margin-top: 10px;
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
     }
     .status-msg {
-      margin-top: 18px;
+      margin-top: 16px;
       font-size: 13px;
       font-family: 'Fira Code', monospace;
-      color: var(--accent);
       min-height: 20px;
+      word-break: break-word;
     }
-    .features-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 24px 0 12px;
+    .status-msg.error { color: var(--error); }
+    .status-msg.success { color: var(--success); }
+    .status-msg.info { color: #818CF8; }
+
+    .user-profile {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 20px;
       text-align: left;
-      font-size: 13px;
+    }
+    .profile-field {
+      margin-bottom: 10px;
+    }
+    .profile-field:last-child {
+      margin-bottom: 0;
+    }
+    .profile-label {
+      font-size: 11px;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .profile-val {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      word-break: break-all;
     }
-    .feature-item span {
-      color: var(--success);
-      font-weight: 800;
-    }
+
     .footer-note {
       margin-top: 24px;
       font-size: 12px;
@@ -131,76 +209,173 @@
     </div>
 
     <h1 class="auth-title">RMAA Accounts</h1>
-    <p class="auth-subtitle">Seamless access across RMAA Cloud, Forge AI, Ali CNC, Matrix &amp; Control Plane.</p>
+    <p class="auth-subtitle">Non-custodial identity &amp; account management powered by Privy Engine.</p>
 
-    <div class="features-list">
-      <div class="feature-item"><span>✓</span> Email Magic Link &amp; OTP Verification</div>
-      <div class="feature-item"><span>✓</span> Google, Apple, GitHub &amp; Discord 1-Click Login</div>
-      <div class="feature-item"><span>✓</span> Automatic Non-Custodial Embedded Wallet</div>
-      <div class="feature-item"><span>✓</span> Automatic Admin Detection &amp; Routing</div>
+    <!-- State 1: Email Input Form -->
+    <div id="email-step">
+      <div class="form-group">
+        <label for="email-input">Email Address</label>
+        <input type="email" id="email-input" class="form-input" placeholder="you@domain.com" autocomplete="email" required>
+      </div>
+
+      <button id="send-code-btn" class="btn-submit" onclick="handleSendCode()">
+        <span>✉️ Send Verification Code</span>
+      </button>
     </div>
 
-    <button id="login-btn" class="btn-submit" onclick="triggerPrivyLogin()">
-      <span>🔐 Sign In / Create RMAA Account</span>
-    </button>
+    <!-- State 2: OTP Verification Form -->
+    <div id="otp-step" style="display: none;">
+      <div class="form-group">
+        <label for="otp-input">6-Digit Code</label>
+        <input type="text" id="otp-input" class="form-input" placeholder="123456" maxlength="6" autocomplete="one-time-code">
+      </div>
+
+      <button id="verify-code-btn" class="btn-submit" onclick="handleVerifyCode()">
+        <span>✓ Confirm &amp; Sign In</span>
+      </button>
+
+      <button class="btn-submit btn-secondary" onclick="resetForm()">
+        <span>← Use Different Email</span>
+      </button>
+    </div>
+
+    <!-- State 3: Authenticated User Profile -->
+    <div id="authenticated-step" style="display: none;">
+      <div class="user-profile">
+        <div class="profile-field">
+          <div class="profile-label">Authenticated Identity</div>
+          <div id="profile-email" class="profile-val"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Privy User ID</div>
+          <div id="profile-id" class="profile-val"></div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Embedded Web3 Wallet</div>
+          <div id="profile-wallet" class="profile-val"></div>
+        </div>
+      </div>
+
+      <button class="btn-submit btn-secondary" onclick="handleSignOut()">
+        <span>Sign Out</span>
+      </button>
+    </div>
 
     <div id="status" class="status-msg"></div>
 
     <div class="footer-note">
-      Authorized administrators auto-redirect to <code>/admin</code>.<br>
-      Powered by <strong>Privy Engine</strong> &amp; RMAA PostgreSQL.
+      Direct non-custodial login. No unauthorized automatic redirects.<br>
+      Powered by <strong>Privy Core</strong> &amp; RMAA Infrastructure.
     </div>
   </div>
 
-  <!-- Privy UMD Web Bundle -->
   <script type="module">
-    import { PrivyClient } from 'https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core@0.36.0/+esm';
+    import { Privy } from 'https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core@0.36.0/+esm';
 
     const PRIVY_APP_ID = 'cmw08immb006s0gl5tw66yy2x';
-    const ADMIN_EMAILS = ['say@rmaa.pk', 'admin@rmaa.pk', 'thealidevmail@gmail.com', 'thealidev@gmail.com'];
+    const privy = new Privy({ appId: PRIVY_APP_ID });
 
-    const client = new PrivyClient({
-      appId: PRIVY_APP_ID
-    });
+    let pendingEmail = '';
 
-    window.triggerPrivyLogin = async function() {
-      const statusDiv = document.getElementById('status');
-      statusDiv.innerHTML = "⏳ Opening Privy Secure Gateway...";
+    const statusEl = document.getElementById('status');
+    const emailStep = document.getElementById('email-step');
+    const otpStep = document.getElementById('otp-step');
+    const authStep = document.getElementById('authenticated-step');
+    const emailInput = document.getElementById('email-input');
+    const otpInput = document.getElementById('otp-input');
+    const sendBtn = document.getElementById('send-code-btn');
+    const verifyBtn = document.getElementById('verify-code-btn');
+
+    function setStatus(msg, type = 'info') {
+      statusEl.className = 'status-msg ' + type;
+      statusEl.textContent = msg;
+    }
+
+    window.handleSendCode = async function() {
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        setStatus('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      pendingEmail = email;
+      sendBtn.disabled = true;
+      setStatus('Sending one-time code to ' + email + '...', 'info');
 
       try {
-        // Redirect to Privy hosted login modal
-        const authUrl = `https://auth.privy.io/apps/${PRIVY_APP_ID}/login?redirect_uri=${encodeURIComponent(window.location.origin + '/accounts')}`;
-        window.location.href = authUrl;
+        await privy.auth.email.sendCode(email);
+        emailStep.style.display = 'none';
+        otpStep.style.display = 'block';
+        otpInput.focus();
+        setStatus('Code sent! Please check your email inbox.', 'success');
       } catch (err) {
-        statusDiv.innerHTML = "❌ " + (err.message || "Login modal initialization failed.");
+        setStatus(err.message || 'Failed to send verification code.', 'error');
+        sendBtn.disabled = false;
       }
     };
 
-    // Check callback on return
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const email = urlParams.get('email');
-      if (email) {
-        handleRedirect(email);
+    window.handleVerifyCode = async function() {
+      const code = otpInput.value.trim();
+      if (!code || code.length < 4) {
+        setStatus('Please enter the verification code.', 'error');
+        return;
       }
-    });
 
-    function handleRedirect(email) {
-      const statusDiv = document.getElementById('status');
-      const cleanEmail = email.toLowerCase();
+      verifyBtn.disabled = true;
+      setStatus('Verifying code with Privy...', 'info');
 
-      if (ADMIN_EMAILS.includes(cleanEmail)) {
-        statusDiv.innerHTML = "👑 Authorized Administrator. Redirecting to /admin ...";
-        setTimeout(() => {
-          window.location.href = '/admin';
-        }, 800);
-      } else {
-        statusDiv.innerHTML = "🎉 Welcome " + cleanEmail + "! Redirecting...";
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1200);
+      try {
+        const result = await privy.auth.email.loginWithCode(pendingEmail, code);
+        const user = result.user || result;
+        showUserProfile(user);
+        setStatus('Authenticated successfully!', 'success');
+      } catch (err) {
+        setStatus(err.message || 'Invalid or expired code.', 'error');
+        verifyBtn.disabled = false;
       }
+    };
+
+    function showUserProfile(user) {
+      emailStep.style.display = 'none';
+      otpStep.style.display = 'none';
+      authStep.style.display = 'block';
+
+      const emailVal = user?.linked_accounts?.find(a => a.type === 'email')?.address || pendingEmail;
+      const walletVal = user?.linked_accounts?.find(a => a.type === 'wallet')?.address || 'Created on demand';
+
+      document.getElementById('profile-email').textContent = emailVal;
+      document.getElementById('profile-id').textContent = user?.id || 'Connected';
+      document.getElementById('profile-wallet').textContent = walletVal;
     }
+
+    window.resetForm = function() {
+      otpStep.style.display = 'none';
+      authStep.style.display = 'none';
+      emailStep.style.display = 'block';
+      sendBtn.disabled = false;
+      verifyBtn.disabled = false;
+      otpInput.value = '';
+      setStatus('', 'info');
+    };
+
+    window.handleSignOut = async function() {
+      try {
+        if (privy.auth && typeof privy.auth.logout === 'function') {
+          await privy.auth.logout();
+        }
+      } catch (e) {
+        console.warn('Logout:', e);
+      }
+      resetForm();
+      setStatus('Signed out.', 'info');
+    };
+
+    // Check if user is already logged in
+    try {
+      if (privy.user) {
+        showUserProfile(privy.user);
+      }
+    } catch (e) {}
   </script>
 </body>
 </html>
