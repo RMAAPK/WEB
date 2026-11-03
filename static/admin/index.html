@@ -325,12 +325,53 @@
             <td>/%postname%/</td>
             <td><span class="status-badge">true</span></td>
           </tr>
+          <tr>
+            <td><code>magic_publishable_key</code></td>
+            <td><code>pk_live_0A95BFD2C77295A8</code></td>
+            <td><span class="status-badge">active</span></td>
+          </tr>
+          <tr>
+            <td><code>magic_auth_email</code></td>
+            <td>say@rmaa.pk</td>
+            <td><span class="status-badge">verified</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Magic.link Passwordless Auth Trigger -->
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="card-title">
+        <span>Magic.link Passwordless Admin Access</span>
+        <span class="status-badge">Passwordless Active</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+        Direct single-click authentication connected to <strong>say@rmaa.pk</strong> via Magic SDK (<code>pk_live_0A95BFD2C77295A8</code>).
+      </p>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <input type="email" id="magic-email" value="say@rmaa.pk" style="background: #080A0E; border: 1px solid var(--card-border); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 14px; width: 280px; font-family: 'Fira Code', monospace;" readonly>
+        <button class="btn" onclick="sendMagicLink()">✨ Send Magic Link to say@rmaa.pk</button>
+      </div>
+      <div id="magic-status" style="margin-top: 12px; font-size: 13px; font-family: 'Fira Code', monospace; color: var(--accent);"></div>
+    </div>
   </main>
 
+  <script src="https://auth.magic.link/sdk"></script>
   <script>
+    const magic = new Magic('pk_live_0A95BFD2C77295A8');
+
+    async function sendMagicLink() {
+      const email = document.getElementById('magic-email').value;
+      const statusDiv = document.getElementById('magic-status');
+      statusDiv.innerHTML = "⏳ Dispatching magic link to " + email + "... Check your inbox!";
+      try {
+        await magic.auth.loginWithMagicLink({ email });
+        statusDiv.innerHTML = "✅ Authentication Successful! Authenticated as " + email;
+      } catch (err) {
+        statusDiv.innerHTML = "ℹ️ Link dispatched or awaiting confirmation in inbox.";
+      }
+    }
+
     function switchTab(tab) {
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       event.target.classList.add('active');
@@ -338,3 +379,4 @@
   </script>
 </body>
 </html>
+
