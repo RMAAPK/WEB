@@ -16,7 +16,7 @@ RUN cd gateway && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/g
 # Stage 2: Production Minimal Runtime
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates curl python3 py3-pip nodejs npm tar tzdata \
+RUN apk add --no-cache ca-certificates curl git python3 py3-pip nodejs npm tar tzdata \
     && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests
 
 WORKDIR /gotosocial
