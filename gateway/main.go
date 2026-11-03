@@ -135,10 +135,20 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. Production Website Static Assets (Checked before Fediverse to serve frontend assets cleanly)
+	// 6. Dedicated Sub-Pages: /forge and /alicnc
+	if path == "/forge" || path == "/forge/" {
+		http.ServeFile(w, r, "static/forge/index.html")
+		return
+	}
+	if path == "/alicnc" || path == "/alicnc/" {
+		http.ServeFile(w, r, "static/alicnc/index.html")
+		return
+	}
+
+	// 7. Production Website Static Assets (Checked before Fediverse to serve frontend assets cleanly)
 	cleanPath := strings.TrimPrefix(path, "/")
 	if cleanPath != "" {
-		if _, err := os.Stat("static/" + cleanPath); err == nil {
+		if fi, err := os.Stat("static/" + cleanPath); err == nil && !fi.IsDir() {
 			staticFS.ServeHTTP(w, r)
 			return
 		}
