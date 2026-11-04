@@ -54,6 +54,12 @@ if [ -f /app/services/upaas/upaas/worker.py ]; then
     (cd /app/services/upaas && PORT=9100 python3 -u upaas/worker.py >/tmp/upaas.log 2>&1) &
 fi
 
+# Launch JFK (Jellyfin Fabric Kernel) Streaming Fabric on port 8098
+if [ -f /app/services/jfk/jfk_server.py ]; then
+    echo "[Boot] Launching JFK Streaming Fabric on 127.0.0.1:8098..."
+    JFK_PORT=8098 python3 -u /app/services/jfk/jfk_server.py >/tmp/jfk.log 2>&1 &
+fi
+
 # Launch Vaultwarden / Bitwarden Zero-Knowledge Server on port 8001
 if command -v vaultwarden >/dev/null 2>&1; then
     echo "[Boot] Launching Vaultwarden on 127.0.0.1:8001..."

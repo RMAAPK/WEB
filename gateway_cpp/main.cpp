@@ -42,6 +42,7 @@ static const Upstream UPSTREAM_LOCALJIT = {"127.0.0.1", 7470};
 static const Upstream UPSTREAM_DMCPS    = {"127.0.0.1", 8000};
 static const Upstream UPSTREAM_UPAAS    = {"127.0.0.1", 9100};
 static const Upstream UPSTREAM_VAULT    = {"127.0.0.1", 8001};
+static const Upstream UPSTREAM_JFK      = {"127.0.0.1", 8098};
 
 // Static MIME mapping
 static std::string get_mime_type(const std::string& path) {
@@ -334,6 +335,13 @@ static void handle_client(int client_fd) {
         }
 
         proxy_request(client_fd, UPSTREAM_VAULT, req, vault_path, "rmaa.pk");
+        close(client_fd);
+        return;
+    }
+
+    // 8.5. JFK Media Streaming Fabric: /jfk/* or /stream/*
+    if (path.rfind("/jfk/", 0) == 0 || path == "/jfk" || path.rfind("/stream/", 0) == 0) {
+        proxy_request(client_fd, UPSTREAM_JFK, req, "", "127.0.0.1:8098");
         close(client_fd);
         return;
     }

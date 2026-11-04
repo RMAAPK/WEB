@@ -21,7 +21,7 @@ RUN g++ -std=c++20 -O3 -pthread -s -static-libstdc++ -static-libgcc -o /build/ga
 FROM alpine:3.19
 
 RUN apk add --no-cache ca-certificates curl git python3 py3-pip nodejs npm tar tzdata libpq \
-    && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests
+    && pip3 install --break-system-packages --no-cache-dir huggingface_hub requests boto3
 
 # Copy Vaultwarden binary and web-vault assets from official alpine image
 COPY --from=vaultwarden-src /vaultwarden /usr/local/bin/vaultwarden
