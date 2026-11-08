@@ -1,17 +1,20 @@
 services:
-  # ── Main Website (rmaa.pk) ──────────────────
+  # Static React/Vite frontend. Attach rmaa.pk after detaching it from the
+  # legacy Node website service in Render.
   - type: web
-    name: muhammad-ali-personal-website
-    env: node
-    plan: free
-    buildCommand: npm install --include=dev && npm run build
-    startCommand: npm start
-    healthCheckPath: /healthz
+    name: rmaa-holdings-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
+      - key: VITE_API_BASE_URL
+        value: https://s.rmaa.pk
 
   # ── Ali CNC LiteLLM Proxy ──────────────────
   - type: web

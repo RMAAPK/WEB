@@ -1,15 +1,29 @@
 services:
   - type: web
     name: rmaa-server
-    env: docker
+    runtime: docker
     plan: free
     region: oregon
-    dockerfilePath: Dockerfile
-    healthCheckPath: /healthz
+    dockerfilePath: backend/Dockerfile
+    healthCheckPath: /api/healthz
+    domains:
+      - s.rmaa.pk
     autoDeploy: true
     envVars:
       - key: PORT
         value: 10000
+      - key: API_PORT
+        value: 5174
+      - key: FRONTEND_ORIGINS
+        value: https://rmaa.pk,https://www.rmaa.pk
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: REPLICATE_MODEL
+        value: deepseek-ai/deepseek-v3.1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
       - key: MATRIX_UPSTREAM_URL
         value: http://127.0.0.1:6167
       - key: FEDIVERSE_UPSTREAM_URL

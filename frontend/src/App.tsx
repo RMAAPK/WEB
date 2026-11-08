@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, ScrollView } from 'react-native';
 import logoUrl from './assets/rmaa_holdings_transparent.png';
+import { BACKEND_BASE_URL } from './lib/api';
 
 export const App: React.FC = () => {
   const [spindleRpm, setSpindleRpm] = useState(24000);
@@ -45,7 +46,7 @@ export const App: React.FC = () => {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <Pressable onPress={() => window.location.href = '/accounts'} style={styles.accountsBtn}>
+          <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/accounts`} style={styles.accountsBtn}>
             <Text style={styles.accountsBtnText}>PORTAL SSO ↗</Text>
           </Pressable>
         </View>
@@ -104,7 +105,7 @@ export const App: React.FC = () => {
                 </View>
                 <Text style={styles.unitTitle}>Forge AI</Text>
               </View>
-              <Pressable onPress={() => window.location.href = '/forge'} style={styles.actionBtn}>
+              <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/forge`} style={styles.actionBtn}>
                 <Text style={styles.actionBtnText}>ACCESS FORGE AI ↗</Text>
               </Pressable>
             </View>
@@ -128,7 +129,7 @@ export const App: React.FC = () => {
                 </View>
                 <Text style={styles.unitTitle}>Ali CNC</Text>
               </View>
-              <Pressable onPress={() => window.location.href = '/alicnc'} style={styles.actionBtn}>
+              <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/alicnc`} style={styles.actionBtn}>
                 <Text style={styles.actionBtnText}>ACCESS ALI CNC ↗</Text>
               </Pressable>
             </View>

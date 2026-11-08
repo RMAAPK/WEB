@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
 import { theme } from '../theme';
+import { apiFetch } from '../lib/api';
 
 export const AiAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +17,7 @@ export const AiAssistant: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await apiFetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg })
@@ -26,7 +27,7 @@ export const AiAssistant: React.FC = () => {
       if (data.id) {
         // Poll for completion
         const poll = setInterval(async () => {
-          const pollRes = await fetch('/api/chat/' + data.id);
+          const pollRes = await apiFetch('/chat/' + encodeURIComponent(data.id));
           const pollData = await pollRes.json();
           if (pollData.reply) {
             clearInterval(poll);

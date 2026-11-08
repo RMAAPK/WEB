@@ -50,13 +50,14 @@ RUN cd /app/services/wadb && npm install --omit=dev --ignore-scripts || npm inst
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
 # Copy configs, scripts, services, and landing page
-COPY static/ /app/static/
+COPY backend/static/ /app/static/
 COPY fediverse/ /app/fediverse/
 COPY matrix/ /app/matrix/
 COPY storage/ /app/storage/
 COPY scripts/ /app/scripts/
 COPY services/ /app/services/
-COPY entrypoint.sh /app/entrypoint.sh
+COPY backend/api/ /app/api/
+COPY backend/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh /app/gateway_bin /app/scripts/*.sh
 

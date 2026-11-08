@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import confetti from 'canvas-confetti';
 import { theme } from '../theme';
 import blogsData from '../data/blogs.json';
+import { apiFetch } from '../lib/api';
 
 export interface BlogPost {
   id: string;
@@ -72,7 +73,7 @@ export const BlogSection: React.FC<BlogSectionProps> = ({
     setIsPingingGoogle(true);
     setGooglePingMsg('Dispatching ping to Google Crawler...');
     try {
-      const res = await fetch('/api/ping-google');
+      const res = await apiFetch('/ping-google');
       const data = await res.json();
       setGooglePingMsg(`✓ Pinged Google with ${data.articlesIndexed} articles!`);
       confetti({

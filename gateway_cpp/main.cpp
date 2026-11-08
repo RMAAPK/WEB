@@ -43,6 +43,7 @@ static const Upstream UPSTREAM_DMCPS    = {"127.0.0.1", 8000};
 static const Upstream UPSTREAM_UPAAS    = {"127.0.0.1", 9100};
 static const Upstream UPSTREAM_VAULT    = {"127.0.0.1", 8001};
 static const Upstream UPSTREAM_JFK      = {"127.0.0.1", 8098};
+static const Upstream UPSTREAM_SITE_API = {"127.0.0.1", 5174};
 
 // Static MIME mapping
 static std::string get_mime_type(const std::string& path) {
@@ -252,7 +253,18 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    // 3. Matrix Protocol Traffic: /_matrix/*
+    // 3. Website APIs: kept on the backend and proxied from the static frontend.
+    bool is_site_api = path == "/api/healthz" ||
+                       path == "/api/blogs" || path.rfind("/api/blogs/", 0) == 0 ||
+                       path == "/api/ping-google" ||
+                       path == "/api/chat" || path.rfind("/api/chat/", 0) == 0;
+    if (is_site_api) {
+        proxy_request(client_fd, UPSTREAM_SITE_API, req, "", "127.0.0.1:5174");
+        close(client_fd);
+        return;
+    }
+
+    // 4. Matrix Protocol Traffic: /_matrix/*
     if (path.rfind("/_matrix/", 0) == 0) {
         proxy_request(client_fd, UPSTREAM_MATRIX, req, "", "127.0.0.1:6167");
         close(client_fd);

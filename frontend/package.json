@@ -5,9 +5,8 @@
   "description": "The official personal website and portfolio of Muhammad Ali (Raja Muhammad Ali Asghar) — Founder of Ali CNC & Forge AI.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "start": "node server.js"
+    "build": "tsc && vite build && node scripts/generate-static-seo.cjs",
+    "preview": "vite preview"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
