@@ -18,4 +18,4 @@ npm run build
 
 The build runs TypeScript checking, Vite, then `scripts/generate-static-seo.cjs` to emit sitemap, robots, RSS, and static blog metadata pages. Set `VITE_API_BASE_URL` at build time to the backend origin (production: `https://s.rmaa.pk`).
 
-Render configuration is kept at `../web/render.yaml` so existing blueprint file paths can be retained; that blueprint points its static site root at this directory.
+The combined Render blueprint is kept at `../backend/render.yaml`; its static-site service points `rootDir` at this directory.

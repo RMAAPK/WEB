@@ -1,50 +1,39 @@
-# RMAA Holdings — split frontend/backend deployment
+# RMAA Holdings
 
-The primary public website and the RMAA server are separate Render services:
+The repository is deliberately split into two application directories:
 
-- **Frontend:** React + Vite in `frontend/`, built to static files and served by a Render Static Site at `rmaa.pk`.
-- **Backend:** Docker orchestration and the website API in `backend/`, deployed as a Render Web Service at `s.rmaa.pk`. The C++ gateway continues to route Matrix, Fediverse, and the existing backend modules; website API paths are proxied to the loopback Node API.
-- **Other service source:** standalone modules and their own deployment configs remain in their existing root folders (`services/`, `scripts/`, `gateway_cpp/`, etc.) so their deployment paths are not needlessly changed.
+- `frontend/` — the React/Vite website, built as a Render Static Site for `rmaa.pk`.
+- `backend/` — the Docker server, API, gateways, protocol daemons, service code, configs, and deployment blueprint for `s.rmaa.pk`.
 
-## Layout
+## Repository layout
 
 ```text
-frontend/                 React/Vite source; static build output is frontend/dist/
-  src/lib/api.ts          API URL helper (VITE_API_BASE_URL)
-  scripts/                build-time static SEO generation
+README.md
+frontend/
+  src/                  React/Vite website
+  scripts/              static SEO generation used during build
+  public/               frontend assets
 backend/
-  Dockerfile              Dockerfile; build from repository-root context
-  entrypoint.sh           starts the backend daemons and API
-  api/                    website JSON API
-  static/                 legacy backend-hosted pages/assets
-render.yaml               Docker backend blueprint
-web/render.yaml           frontend static-site/LiteLLM blueprint
+  Dockerfile            main Docker image
+  entrypoint.sh         starts the API and backend daemons
+  api/                  Node API proxied by the C++ gateway
+  gateway/              Go gateway source
+  gateway_cpp/          production C++ gateway source
+  fediverse/ matrix/ scripts/ services/ storage/ static/
+  render.yaml           Render blueprint for frontend and backend services
 ```
 
-## Render deployment
+All application source and deployment configuration is under `frontend/` or `backend/`; the repository root contains only this README and those two directories.
 
-### Frontend
+## Render
 
-The frontend blueprint is `web/render.yaml`. It defines `rmaa-holdings-frontend` as a static site with:
+The combined blueprint is `backend/render.yaml`. The frontend is a Static Site with root directory `frontend`; the Docker backend is built from the repository root using `backend/Dockerfile` and is served at `s.rmaa.pk`. The frontend calls `https://s.rmaa.pk` for API requests.
 
-- Root directory: `frontend`
-- Build: `npm ci && npm run build`
-- Publish directory: `dist`
-- API base URL: `https://s.rmaa.pk`
+After moving the blueprint file, set the Render Blueprint path to `backend/render.yaml` if the existing Blueprint still points to `/render.yaml`. Attach `rmaa.pk` to the new static service after releasing it from the legacy Node website service. Render’s deployment of the code and reassignment of an existing custom domain are separate operations.
 
-Attach the custom domain `rmaa.pk` to this static service after detaching it from the legacy Node website service. The frontend blueprint deliberately avoids taking the domain while that old service may still own it.
+The old scheduled GitHub keepalive workflow is nested under `backend/.github`; GitHub only runs workflows in the repository-root `.github/workflows` directory. If the Render free service must be kept warm, use an external monitor or a Render cron. The backend’s internal self-ping alone may not prevent Render idle suspension.
 
-### Backend
-
-The root `render.yaml` defines the Docker service. It points to `backend/Dockerfile` **with the repository root as Docker build context**, because the Dockerfile copies existing backend modules from root-level folders. Its health check is `/api/healthz`; the public website API is routed through the gateway to Node on `127.0.0.1:5174`.
-
-Set the backend custom domain to `s.rmaa.pk`. Configure secrets in Render, not in source control:
-
-- `REPLICATE_API_TOKEN` for AI chat
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` if chat logging is enabled
-- Existing Matrix, Fediverse, Hugging Face, and storage variables required by the selected backend services
-
-`FRONTEND_ORIGINS` is set to `https://rmaa.pk,https://www.rmaa.pk` for API CORS. Update it if the frontend uses different origins.
+Secrets belong in Render environment settings, not in source. The blueprint marks provider/database secrets as unsynchronized values.
 
 ## Local checks
 
@@ -58,14 +47,4 @@ cd ..
 docker build -f backend/Dockerfile -t rmaa-backend .
 ```
 
-The final `.` is important: it keeps the Docker build context at the repository root. After running the backend locally, check:
-
-```sh
-curl -i http://localhost:10000/api/healthz
-curl -i -X OPTIONS http://localhost:10000/api/chat \
-  -H 'Origin: https://rmaa.pk' \
-  -H 'Access-Control-Request-Method: POST' \
-  -H 'Access-Control-Request-Headers: content-type'
-```
-
-The API returns JSON at `/api/healthz`, `/api/blogs`, `/api/blogs/:slug`, `/api/ping-google`, and `/api/chat` (AI chat requires a configured Replicate token). The frontend build generates `sitemap.xml`, `robots.txt`, RSS feeds, and static blog metadata pages.
+The Docker build context (`.`) must remain the repository root. The API health check is `/api/healthz`; website APIs include `/api/blogs`, `/api/ping-google`, and `/api/chat`.
