@@ -14,7 +14,7 @@ FROM vaultwarden/server:alpine AS vaultwarden-src
 FROM alpine:3.19 AS gateway-builder
 RUN apk add --no-cache g++ make musl-dev
 WORKDIR /build
-COPY backend/gateway_cpp/ ./
+COPY gateway_cpp/ ./
 RUN g++ -std=c++20 -O3 -pthread -s -static-libstdc++ -static-libgcc -o /build/gateway_bin main.cpp
 
 # Stage 2: Production Minimal Runtime
@@ -43,21 +43,21 @@ RUN curl -sSL -o /usr/local/bin/matrix-homeserver "https://github.com/x86pup/con
 WORKDIR /app
 
 # Pre-install WA-DB Sentinel dependencies
-COPY backend/services/wadb/package.json /app/services/wadb/
+COPY services/wadb/package.json /app/services/wadb/
 RUN cd /app/services/wadb && npm install --omit=dev --ignore-scripts || npm install --production
 
 # Copy Gateway binary from Stage 1
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
 # Copy configs, scripts, services, and landing page
-COPY backend/static/ /app/static/
-COPY backend/fediverse/ /app/fediverse/
-COPY backend/matrix/ /app/matrix/
-COPY backend/storage/ /app/storage/
-COPY backend/scripts/ /app/scripts/
-COPY backend/services/ /app/services/
-COPY backend/api/ /app/api/
-COPY backend/entrypoint.sh /app/entrypoint.sh
+COPY static/ /app/static/
+COPY fediverse/ /app/fediverse/
+COPY matrix/ /app/matrix/
+COPY storage/ /app/storage/
+COPY scripts/ /app/scripts/
+COPY services/ /app/services/
+COPY api/ /app/api/
+COPY entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh /app/gateway_bin /app/scripts/*.sh
 

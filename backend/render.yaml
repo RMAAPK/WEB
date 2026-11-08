@@ -4,7 +4,8 @@ services:
   runtime: docker
   plan: free
   region: oregon
-  dockerfilePath: backend/Dockerfile
+  rootDir: backend
+  dockerfilePath: Dockerfile
   healthCheckPath: /api/healthz
   domains:
   - s.rmaa.pk

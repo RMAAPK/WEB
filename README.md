@@ -27,7 +27,7 @@ All application source and deployment configuration is under `frontend/` or `bac
 
 ## Render
 
-The combined blueprint is `backend/render.yaml`. The frontend is a Static Site with root directory `frontend`; the Docker backend is built from the repository root using `backend/Dockerfile` and is served at `s.rmaa.pk`. The frontend calls `https://s.rmaa.pk` for API requests.
+The combined blueprint is `backend/render.yaml`. The frontend is a Static Site with root directory `frontend`; the Docker backend has root directory `backend` and uses its local `Dockerfile`, serving `s.rmaa.pk`. The frontend calls `https://s.rmaa.pk` for API requests.
 
 After moving the blueprint file, set the Render Blueprint path to `backend/render.yaml` if the existing Blueprint still points to `/render.yaml`. Attach `rmaa.pk` to the new static service after releasing it from the legacy Node website service. Render’s deployment of the code and reassignment of an existing custom domain are separate operations.
 
@@ -44,7 +44,7 @@ cd frontend
 npm ci
 npm run build
 cd ..
-docker build -f backend/Dockerfile -t rmaa-backend .
+docker build -t rmaa-backend backend
 ```
 
-The Docker build context (`.`) must remain the repository root. The API health check is `/api/healthz`; website APIs include `/api/blogs`, `/api/ping-google`, and `/api/chat`.
+The Docker build context is `backend/` (the command above supplies that directory). The API health check is `/api/healthz`; website APIs include `/api/blogs`, `/api/ping-google`, and `/api/chat`.
