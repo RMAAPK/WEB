@@ -13,7 +13,9 @@ mkdir -p /data/matrix /data/gotosocial/storage
 
 # 2. Launch the website API separately from the static frontend. The public
 # C++ gateway proxies the browser-facing /api/* routes to this loopback service.
-API_PORT="${API_PORT:-5174}" node /app/api/server.js >/tmp/rmaa_api.log 2>&1 &
+API_PORT="${API_PORT:-5174}"
+export API_PORT
+node /app/api/server.js >/tmp/rmaa_api.log 2>&1 &
 API_PID=$!
 echo "[Boot] Launching RMAA API on 127.0.0.1:${API_PORT}..."
 api_attempt=0
