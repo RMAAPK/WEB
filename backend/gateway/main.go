@@ -17,7 +17,7 @@ import (
 // 2. Mastodon / ActivityPub (GoToSocial) on localhost:8080
 // 3. MusicAI Engine on localhost:9090
 // 4. WA-DB Sentinel on localhost:3000
-// 5. Official RMAA Holdings Production Website & Web SPA (static/)
+// 5. Website API routing and federated protocol endpoints; HTML is served by the separate static frontend.
 
 const (
 	defaultPort         = "10000"
@@ -39,11 +39,9 @@ var (
 	localjitProxy  *httputil.ReverseProxy
 	dmcpsProxy     *httputil.ReverseProxy
 	upaasProxy     *httputil.ReverseProxy
-	staticFS       http.Handler
 )
 
 func init() {
-	staticFS = http.FileServer(http.Dir("static"))
 
 	matrixTarget, _ := url.Parse(getEnv("MATRIX_UPSTREAM_URL", defaultMatrixURL))
 	matrixProxy = httputil.NewSingleHostReverseProxy(matrixTarget)
@@ -185,27 +183,22 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 9. Dedicated Sub-Pages: /forge, /alicnc, /fargolore
-	if path == "/forge" || path == "/forge/" {
-		http.ServeFile(w, r, "static/forge/index.html")
-		return
-	}
-	if path == "/alicnc" || path == "/alicnc/" {
-		http.ServeFile(w, r, "static/alicnc/index.html")
-		return
-	}
-	if path == "/fargolore" || path == "/fargolore/" {
-		http.ServeFile(w, r, "static/fargolore/index.html")
-		return
-	}
-
-	// 7. Production Website Static Assets (Checked before Fediverse to serve frontend assets cleanly)
-	cleanPath := strings.TrimPrefix(path, "/")
-	if cleanPath != "" {
-		if fi, err := os.Stat("static/" + cleanPath); err == nil && !fi.IsDir() {
-			staticFS.ServeHTTP(w, r)
-			return
+	// Website pages belong to the static frontend. Preserve old backend URLs with redirects.
+	for _, prefix := range []string{"/accounts", "/admin", "/forge", "/alicnc", "/fargolore"} {
+		pathMatch := path == prefix || path == prefix+"/" ||
+			((prefix == "/forge" || prefix == "/alicnc" || prefix == "/fargolore") && strings.HasPrefix(path, prefix+"/"))
+		if !pathMatch {
+			continue
 		}
+		target := r.URL.RequestURI()
+		if path == prefix {
+			target = prefix + "/"
+			if r.URL.RawQuery != "" {
+				target += "?" + r.URL.RawQuery
+			}
+		}
+		http.Redirect(w, r, "https://rmaa.pk"+target, http.StatusFound)
+		return
 	}
 
 	// 7. Fediverse / Mastodon Protocol Traffic
@@ -231,8 +224,15 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 8. Serve index.html for root and SPA client-side routes
-	http.ServeFile(w, r, "static/index.html")
+	// The backend is API/protocol-only; never serve website HTML here.
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if path == "/" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"service":"rmaa-backend","status":"ok"}`))
+		return
+	}
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte(`{"error":"Not found"}`))
 }
 
 func main() {

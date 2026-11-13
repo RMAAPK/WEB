@@ -1,6 +1,6 @@
 # RMAA Holdings Frontend
 
-React + Vite website deployed as a Render Static Site, including static Forge AI and Ali CNC pages in `public/forge/` and `public/alicnc/`. Node is used to build the site; there is no frontend Node/Express runtime.
+React + Vite website deployed as a Render Static Site. All public sub-pages live under `public/`: Accounts, Admin, Forge AI, Ali CNC, and Fargo Lore. Node is used to build the site; there is no frontend Node/Express runtime.
 
 ```sh
 npm ci

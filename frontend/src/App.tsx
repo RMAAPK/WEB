@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, ScrollView } from 'react-native';
 import logoUrl from './assets/rmaa_holdings_transparent.png';
-import { BACKEND_BASE_URL } from './lib/api';
 
 export const App: React.FC = () => {
   const [spindleRpm, setSpindleRpm] = useState(24000);
@@ -46,7 +45,7 @@ export const App: React.FC = () => {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/accounts`} style={styles.accountsBtn}>
+          <Pressable onPress={() => window.location.href = '/accounts/'} style={styles.accountsBtn}>
             <Text style={styles.accountsBtnText}>PORTAL SSO ↗</Text>
           </Pressable>
         </View>

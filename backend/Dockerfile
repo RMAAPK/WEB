@@ -50,7 +50,6 @@ RUN cd /app/services/wadb && npm install --omit=dev --ignore-scripts || npm inst
 COPY --from=gateway-builder /build/gateway_bin /app/gateway_bin
 
 # Copy configs, scripts, services, and landing page
-COPY static/ /app/static/
 COPY fediverse/ /app/fediverse/
 COPY matrix/ /app/matrix/
 COPY storage/ /app/storage/

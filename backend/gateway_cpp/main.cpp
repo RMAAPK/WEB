@@ -5,24 +5,18 @@
 #include <unordered_map>
 #include <thread>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <cstring>
 #include <cstdlib>
 #include <csignal>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <fcntl.h>
 #include <poll.h>
 
-namespace fs = std::filesystem;
 
 // Configuration defaults
 static const std::string DOMAIN_NAME = "rmaa.pk";
@@ -45,80 +39,19 @@ static const Upstream UPSTREAM_VAULT    = {"127.0.0.1", 8001};
 static const Upstream UPSTREAM_JFK      = {"127.0.0.1", 8098};
 static const Upstream UPSTREAM_SITE_API = {"127.0.0.1", 5174};
 
-// Static MIME mapping
-static std::string get_mime_type(const std::string& path) {
-    if (path.ends_with(".html") || path.ends_with(".htm")) return "text/html; charset=utf-8";
-    if (path.ends_with(".js") || path.ends_with(".mjs"))   return "text/javascript; charset=utf-8";
-    if (path.ends_with(".css"))                            return "text/css; charset=utf-8";
-    if (path.ends_with(".json"))                           return "application/json";
-    if (path.ends_with(".png"))                            return "image/png";
-    if (path.ends_with(".jpg") || path.ends_with(".jpeg")) return "image/jpeg";
-    if (path.ends_with(".svg"))                            return "image/svg+xml";
-    if (path.ends_with(".ico"))                            return "image/x-icon";
-    if (path.ends_with(".woff2"))                          return "font/woff2";
-    if (path.ends_with(".woff"))                           return "font/woff";
-    if (path.ends_with(".ttf"))                            return "font/ttf";
-    if (path.ends_with(".exe") || path.ends_with(".bin"))  return "application/octet-stream";
-    return "application/octet-stream";
-}
-
-// Redirect legacy backend-hosted frontend routes to the static website.
+// Redirect legacy backend-hosted website URLs to the static frontend.
 static void redirect_to_frontend(int client_fd, const std::string& path) {
     const std::string location = "https://rmaa.pk" + path;
-    const std::string response = "HTTP/1.1 302 Found
-
-Location: " + location +
-        "
-
-Cache-Control: no-store
-
-Content-Length: 0
-
-Connection: close
-
-
-
-";
+    const std::string response = "HTTP/1.1 302 Found\r\nLocation: " + location +
+        "\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
     send(client_fd, response.data(), response.size(), 0);
 }
 
-// Low-overhead file sender
-static void serve_static_file(int client_fd, const std::string& file_path, int status_code = 200, const std::string& status_text = "OK") {
-    struct stat st;
-    if (stat(file_path.c_str(), &st) != 0 || S_ISDIR(st.st_mode)) {
-        const std::string not_found = "HTTP/1.1 404 Not Found\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found";
-        send(client_fd, not_found.data(), not_found.size(), 0);
-        return;
-    }
-
-    int in_fd = open(file_path.c_str(), O_RDONLY);
-    if (in_fd < 0) {
-        const std::string err500 = "HTTP/1.1 500 Internal Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-        send(client_fd, err500.data(), err500.size(), 0);
-        return;
-    }
-
-    std::string mime = get_mime_type(file_path);
-    std::string header = "HTTP/1.1 " + std::to_string(status_code) + " " + status_text + "\r\n"
-                         "Content-Type: " + mime + "\r\n"
-                         "Content-Length: " + std::to_string(st.st_size) + "\r\n"
-                         "Connection: close\r\n"
-                         "X-Content-Type-Options: nosniff\r\n"
-                         "Server: RMAA-C++-Core/1.0\r\n\r\n";
-
-    send(client_fd, header.data(), header.size(), 0);
-
-    char buf[65536];
-    ssize_t bytes_read;
-    while ((bytes_read = read(in_fd, buf, sizeof(buf))) > 0) {
-        ssize_t total_sent = 0;
-        while (total_sent < bytes_read) {
-            ssize_t sent = send(client_fd, buf + total_sent, bytes_read - total_sent, 0);
-            if (sent <= 0) break;
-            total_sent += sent;
-        }
-    }
-    close(in_fd);
+static void send_json_response(int client_fd, int status, const std::string& reason, const std::string& body) {
+    const std::string response = "HTTP/1.1 " + std::to_string(status) + " " + reason +
+        "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " +
+        std::to_string(body.size()) + "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
+    send(client_fd, response.data(), response.size(), 0);
 }
 
 // Low-latency TCP bidirectional proxy tunnel
@@ -378,45 +311,24 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    // 9. Dedicated Sub-Pages: /accounts, /admin, /forge, /alicnc, /fargolore
-    if (path == "/accounts" || path == "/accounts/") {
-        serve_static_file(client_fd, "static/accounts/index.html");
+    // Website pages live on the frontend. Preserve old backend URLs as redirects.
+    auto redirect_frontend_route = [&](const std::string& prefix, bool include_subpaths) {
+        const bool exact = path == prefix || path == prefix + "/";
+        const bool nested = include_subpaths && path.rfind(prefix + "/", 0) == 0;
+        if (!exact && !nested) return false;
+        const std::string target_path = (path == prefix)
+            ? prefix + "/" + full_path.substr(path.size())
+            : full_path;
+        redirect_to_frontend(client_fd, target_path);
         close(client_fd);
+        return true;
+    };
+    if (redirect_frontend_route("/accounts", false) ||
+        redirect_frontend_route("/admin", false) ||
+        redirect_frontend_route("/forge", true) ||
+        redirect_frontend_route("/alicnc", true) ||
+        redirect_frontend_route("/fargolore", true)) {
         return;
-    }
-    if (path == "/admin" || path == "/admin/") {
-        serve_static_file(client_fd, "static/admin/index.html");
-        close(client_fd);
-        return;
-    }
-    if (path == "/forge" || path.rfind("/forge/", 0) == 0) {
-        redirect_to_frontend(client_fd, path == "/forge" ? "/forge/" + full_path.substr(path.size()) : full_path);
-        close(client_fd);
-        return;
-    }
-    if (path == "/alicnc" || path.rfind("/alicnc/", 0) == 0) {
-        redirect_to_frontend(client_fd, path == "/alicnc" ? "/alicnc/" + full_path.substr(path.size()) : full_path);
-        close(client_fd);
-        return;
-    }
-    if (path == "/fargolore" || path == "/fargolore/") {
-        serve_static_file(client_fd, "static/fargolore/index.html");
-        close(client_fd);
-        return;
-    }
-
-    // 10. Static Asset Resolution (Checked before Fediverse)
-    std::string clean_rel = path;
-    while (!clean_rel.empty() && clean_rel[0] == '/') clean_rel.erase(0, 1);
-
-    if (!clean_rel.empty()) {
-        std::string target_file = "static/" + clean_rel;
-        struct stat st;
-        if (stat(target_file.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
-            serve_static_file(client_fd, target_file);
-            close(client_fd);
-            return;
-        }
     }
 
     // 11. Fediverse / Mastodon Protocol Traffic
@@ -442,8 +354,12 @@ static void handle_client(int client_fd) {
         return;
     }
 
-    // 12. Default: Serve Master Website SPA index.html
-    serve_static_file(client_fd, "static/index.html");
+    // The backend is API/protocol-only; never serve website HTML here.
+    if (path == "/") {
+        send_json_response(client_fd, 200, "OK", R"({"service":"rmaa-backend","status":"ok"})");
+    } else {
+        send_json_response(client_fd, 404, "Not Found", R"({"error":"Not found"})");
+    }
     close(client_fd);
 }
 
