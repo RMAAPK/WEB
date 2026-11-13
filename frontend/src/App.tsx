@@ -105,7 +105,7 @@ export const App: React.FC = () => {
                 </View>
                 <Text style={styles.unitTitle}>Forge AI</Text>
               </View>
-              <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/forge`} style={styles.actionBtn}>
+              <Pressable onPress={() => window.location.href = '/forge/'} style={styles.actionBtn}>
                 <Text style={styles.actionBtnText}>ACCESS FORGE AI ↗</Text>
               </Pressable>
             </View>
@@ -129,7 +129,7 @@ export const App: React.FC = () => {
                 </View>
                 <Text style={styles.unitTitle}>Ali CNC</Text>
               </View>
-              <Pressable onPress={() => window.location.href = `${BACKEND_BASE_URL}/alicnc`} style={styles.actionBtn}>
+              <Pressable onPress={() => window.location.href = '/alicnc/'} style={styles.actionBtn}>
                 <Text style={styles.actionBtnText}>ACCESS ALI CNC ↗</Text>
               </Pressable>
             </View>

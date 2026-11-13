@@ -62,6 +62,26 @@ static std::string get_mime_type(const std::string& path) {
     return "application/octet-stream";
 }
 
+// Redirect legacy backend-hosted frontend routes to the static website.
+static void redirect_to_frontend(int client_fd, const std::string& path) {
+    const std::string location = "https://rmaa.pk" + path;
+    const std::string response = "HTTP/1.1 302 Found
+
+Location: " + location +
+        "
+
+Cache-Control: no-store
+
+Content-Length: 0
+
+Connection: close
+
+
+
+";
+    send(client_fd, response.data(), response.size(), 0);
+}
+
 // Low-overhead file sender
 static void serve_static_file(int client_fd, const std::string& file_path, int status_code = 200, const std::string& status_text = "OK") {
     struct stat st;
@@ -369,13 +389,13 @@ static void handle_client(int client_fd) {
         close(client_fd);
         return;
     }
-    if (path == "/forge" || path == "/forge/") {
-        serve_static_file(client_fd, "static/forge/index.html");
+    if (path == "/forge" || path.rfind("/forge/", 0) == 0) {
+        redirect_to_frontend(client_fd, path == "/forge" ? "/forge/" + full_path.substr(path.size()) : full_path);
         close(client_fd);
         return;
     }
-    if (path == "/alicnc" || path == "/alicnc/") {
-        serve_static_file(client_fd, "static/alicnc/index.html");
+    if (path == "/alicnc" || path.rfind("/alicnc/", 0) == 0) {
+        redirect_to_frontend(client_fd, path == "/alicnc" ? "/alicnc/" + full_path.substr(path.size()) : full_path);
         close(client_fd);
         return;
     }

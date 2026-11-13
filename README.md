@@ -2,7 +2,7 @@
 
 The repository has two application roots:
 
-- `frontend/` — React/Vite website, deployed as a Render **Static Site** at `rmaa.pk`.
+- `frontend/` — React/Vite website and the `/forge/` and `/alicnc/` sub-sites, deployed as a Render **Static Site** at `rmaa.pk`.
 - `backend/` — Docker server, API, gateways, protocol daemons, service code, and configs, deployed as a Render **Web Service** at `s.rmaa.pk`.
 
 The repo root contains only this README and those two folders.
@@ -43,4 +43,4 @@ cd ..
 docker build -t rmaa-backend backend
 ```
 
-The API health check is `/api/healthz`; website APIs include `/api/blogs`, `/api/ping-google`, and `/api/chat`.
+The API health check is `/api/healthz`; website APIs include `/api/blogs`, `/api/ping-google`, and `/api/chat`. Forge AI and Ali CNC assets live in `frontend/public/forge/` and `frontend/public/alicnc/`; the backend redirects legacy `/forge` and `/alicnc` requests to the static site.
