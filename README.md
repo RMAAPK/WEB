@@ -3,7 +3,7 @@
 The repository has two application roots:
 
 - `frontend/` — React/Vite website and all public pages (`/accounts/`, `/admin/`, `/forge/`, `/alicnc/`, `/fargolore/`), deployed as a Render **Static Site** at `rmaa.pk`.
-- `backend/` — Docker API server, gateways, protocol daemons, service code, and configs, deployed as a Render **Web Service** at `s.rmaa.pk`. It returns JSON/protocol responses and redirects legacy website URLs to `rmaa.pk`; it does not serve the public site.
+- `backend/` — Docker API server, gateways, protocol daemons, service code, and configs, deployed as a Render **Web Service** at `s.rmaa.pk`. It returns JSON/protocol responses only; public website pages and assets are served from the Static Site.
 
 The repo root contains only this README and those two folders.
 

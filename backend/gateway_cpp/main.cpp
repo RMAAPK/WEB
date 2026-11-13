@@ -39,21 +39,6 @@ static const Upstream UPSTREAM_VAULT    = {"127.0.0.1", 8001};
 static const Upstream UPSTREAM_JFK      = {"127.0.0.1", 8098};
 static const Upstream UPSTREAM_SITE_API = {"127.0.0.1", 5174};
 
-// Redirect legacy backend-hosted website URLs to the static frontend.
-static void redirect_to_frontend(int client_fd, const std::string& path) {
-    const std::string location = "https://rmaa.pk" + path;
-    const std::string response = "HTTP/1.1 302 Found\r\nLocation: " + location +
-        "\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-    send(client_fd, response.data(), response.size(), 0);
-}
-
-static void send_json_response(int client_fd, int status, const std::string& reason, const std::string& body) {
-    const std::string response = "HTTP/1.1 " + std::to_string(status) + " " + reason +
-        "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " +
-        std::to_string(body.size()) + "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n" + body;
-    send(client_fd, response.data(), response.size(), 0);
-}
-
 // Low-latency TCP bidirectional proxy tunnel
 static void proxy_request(int client_fd, const Upstream& upstream, std::string initial_data, const std::string& new_path, const std::string& custom_host = "") {
     int up_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -308,26 +293,6 @@ static void handle_client(int client_fd) {
     if (path.rfind("/jfk/", 0) == 0 || path == "/jfk" || path.rfind("/stream/", 0) == 0) {
         proxy_request(client_fd, UPSTREAM_JFK, req, "", "127.0.0.1:8098");
         close(client_fd);
-        return;
-    }
-
-    // Website pages live on the frontend. Preserve old backend URLs as redirects.
-    auto redirect_frontend_route = [&](const std::string& prefix, bool include_subpaths) {
-        const bool exact = path == prefix || path == prefix + "/";
-        const bool nested = include_subpaths && path.rfind(prefix + "/", 0) == 0;
-        if (!exact && !nested) return false;
-        const std::string target_path = (path == prefix)
-            ? prefix + "/" + full_path.substr(path.size())
-            : full_path;
-        redirect_to_frontend(client_fd, target_path);
-        close(client_fd);
-        return true;
-    };
-    if (redirect_frontend_route("/accounts", false) ||
-        redirect_frontend_route("/admin", false) ||
-        redirect_frontend_route("/forge", true) ||
-        redirect_frontend_route("/alicnc", true) ||
-        redirect_frontend_route("/fargolore", true)) {
         return;
     }
 

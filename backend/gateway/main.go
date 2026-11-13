@@ -183,24 +183,6 @@ func routerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Website pages belong to the static frontend. Preserve old backend URLs with redirects.
-	for _, prefix := range []string{"/accounts", "/admin", "/forge", "/alicnc", "/fargolore"} {
-		pathMatch := path == prefix || path == prefix+"/" ||
-			((prefix == "/forge" || prefix == "/alicnc" || prefix == "/fargolore") && strings.HasPrefix(path, prefix+"/"))
-		if !pathMatch {
-			continue
-		}
-		target := r.URL.RequestURI()
-		if path == prefix {
-			target = prefix + "/"
-			if r.URL.RawQuery != "" {
-				target += "?" + r.URL.RawQuery
-			}
-		}
-		http.Redirect(w, r, "https://rmaa.pk"+target, http.StatusFound)
-		return
-	}
-
 	// 7. Fediverse / Mastodon Protocol Traffic
 	isActivityPub := strings.Contains(acceptHeader, "application/activity+json") ||
 		strings.Contains(acceptHeader, "application/ld+json") ||
