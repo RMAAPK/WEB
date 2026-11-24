@@ -5,7 +5,11 @@ The repository has two application roots:
 - `frontend/` — React/Vite website and all public pages (`/accounts/`, `/admin/`, `/forge/`, `/alicnc/`, `/fargolore/`), deployed as a Render **Static Site** at `rmaa.pk`.
 - `backend/` — Docker API server, gateways, protocol daemons, service code, and configs, deployed as a Render **Web Service** at `s.rmaa.pk`. It returns JSON/protocol responses only; public website pages and assets are served from the Static Site.
 
-The repo root contains only this README and those two folders.
+The repo root contains this README, `LICENSE`, and those two application folders.
+
+## License
+
+Original RMAA Holdings work is licensed under the Business Source License 1.1; see [`LICENSE`](LICENSE) for the grant and change terms. Components with their own license files, along with third-party materials and dependencies, remain under their respective licenses.
 
 ## Render dashboard setup
 
